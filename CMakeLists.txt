@@ -77,6 +77,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Algorithm/PID/pyro_algo_pid.cpp
         PYRo/Algorithm/EKF/QuaternionEKF.cpp
         PYRo/Algorithm/KF/kalman_filter.cpp
+        PYRo/Algorithm/Common/pyro_common.cpp
 
         # --- Component ---
         PYRo/Component/CRC/PYRo_crc.cpp
@@ -114,6 +115,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Application/Demo/pyro_shoot_demo.cpp
         PYRo/Application/Mission/pyro_init_thread.cpp
         PYRo/Application/Mission/pyro_mission_planer.cpp
+        PYRo/Application/pyro_chassis.cpp
 
         # --- Debug ---
         PYRo/Debug/Debug_task.cpp
@@ -136,6 +138,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         PYRo/Algorithm/PID
         PYRo/Algorithm/EKF
         PYRo/Algorithm/KF
+        PYRo/Algorithm/Common
         PYRo/Component/CRC
         PYRo/Component/IMU
         PYRo/Component/Motor

@@ -5,6 +5,9 @@
 
 using namespace pyro;
 
+#define BARYCENTER_K0 0.0332911f
+#define BARYCENTER_K1 -0.5908261f
+#define BARYCENTER_K2 0.2033493f
 dm_motor_drv_t* r_motor1;
 dm_motor_drv_t* r_motor2;
 dm_motor_drv_t* l_motor1;
@@ -14,9 +17,11 @@ float r_phi1, r_phi2, l_phi1, l_phi2;
 float r_alpha, l_alpha;
 float r_l, l_l;
 float r_T[2],r_F[2],l_T[2],l_F[2],T_val[4];
+float r_barycenter, l_barycenter;
 arm_matrix_instance_f32 T;
 rc_drv_t *dr16_drv;
 
+float calc_barycenter(float leg_length);
 
 
 void update_transform_matrix(float phi1, float phi2,
@@ -76,6 +81,8 @@ extern "C" void pyro_chassis(void* argument)
         // VMC transform
         r_F[0] = 1.0f;
         r_F[1] = 1.0f;
+        
+        r_barycenter = calc_barycenter(r_l); 
         update_transform_matrix(r_phi1, r_phi2, 
                               r_theta1, r_theta2,
                                r_alpha, r_l, T.pData);
@@ -93,7 +100,8 @@ void update_transform_matrix(float phi1, float phi2,
     T[0] = (21059*arm_cos_f32(phi2)*arm_sin_f32(alpha)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_cos_f32(alpha)*arm_sin_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2));
     T[1] = -((21059*arm_cos_f32(alpha)*arm_cos_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)))/l;
     T[2] = (21059*arm_cos_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_cos_f32(phi1)*arm_sin_f32(alpha)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2));
-    T[3] = ((21059*arm_cos_f32(alpha)*arm_cos_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)))/l;
+    T[3] = ((21059*arm_cos_f32(alpha)*arm_cos_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)))/l; 
+
 }
 
 void update_rc(void)
@@ -101,4 +109,9 @@ void update_rc(void)
     read_scope_lock rc_read_lock(dr16_drv->get_lock());
     auto rc_data = static_cast<const pyro::dr16_drv_t::dr16_ctrl_t *>(
                                                             dr16_drv->read());
+}
+
+float calc_barycenter(float leg_length)
+{
+    return BARYCENTER_K0 + BARYCENTER_K1 * leg_length + BARYCENTER_K2 * leg_length * leg_length;
 }
