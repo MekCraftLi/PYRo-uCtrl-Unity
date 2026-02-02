@@ -28,6 +28,10 @@ class mec_chassis_t final : public chassis_base_t
     void chassis_control() override;
     void power_control() override;
     void send_motor_command() override;
+    
+    // 添加设置轮子初始量的方法
+    void set_wheel_initial_offset(int index, float offset);
+    void set_all_wheels_initial_offset(const float offsets[4]);
 
   private:
     motor_base_t *_wheel_motor[4]{}; // FL, FR, BL, BR

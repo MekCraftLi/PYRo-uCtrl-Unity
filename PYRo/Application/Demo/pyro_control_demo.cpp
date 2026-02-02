@@ -3,156 +3,70 @@
 #include "cmsis_os.h"
 #include "fdcan.h"
 #include "pyro_can_drv.h"
-#include "pyro_chassis_drv.h"
-#include "pyro_yaw_drv.h"
-#include "pyro_rw_lock.h"
 #include "pyro_rc_hub.h"
+#include "pyro_rud_chassis.h"
+#include "pyro_rw_lock.h"
+#include "stm32h723xx.h"
 
 #ifdef __cplusplus
 
-pyro::rc_drv_t *dr16_drv;
-
 extern "C"
 {
-    pyro::dji_m3508_motor_drv_t *m3508_drv_1;
-    pyro::dji_m3508_motor_drv_t *m3508_drv_2;
-    pyro::dji_m3508_motor_drv_t *m3508_drv_3;
-    pyro::dji_m3508_motor_drv_t *m3508_drv_4;
-
-    pyro::dji_gm_6020_motor_drv_t *gm6020_drv_1;
-    pyro::dji_gm_6020_motor_drv_t *gm6020_drv_2;
-    pyro::dji_gm_6020_motor_drv_t *gm6020_drv_3;
-
-    pyro::wheel_drv_t *wheel_drv_1;
-    pyro::wheel_drv_t *wheel_drv_2;
-    pyro::wheel_drv_t *wheel_drv_3;
-    pyro::wheel_drv_t *wheel_drv_4;
-
-    pyro::pid_ctrl_t *speed_pid_1;
-    pyro::pid_ctrl_t *speed_pid_2;
-    pyro::pid_ctrl_t *speed_pid_3;
-    pyro::pid_ctrl_t *speed_pid_4;
-
-    pyro::steering_wheel_drv_t *steering_wheel_drv_1;
-    pyro::steering_wheel_drv_t *steering_wheel_drv_2;
-
-    pyro::yaw_drv_t *yaw_drv_1;
-
-    pyro::chassis_drv_t *chassis_drv;
-
-    pyro::pid_ctrl_t *rudder_rotate_pid_1;
-    pyro::pid_ctrl_t *rudder_position_pid_1;
-    pyro::pid_ctrl_t *rudder_rotate_pid_2;
-    pyro::pid_ctrl_t *rudder_position_pid_2;
-
-    pyro::pid_ctrl_t *yaw_rotate_pid_1;
-    pyro::pid_ctrl_t *yaw_position_pid_1;
-
     void pyro_control_demo(void *arg)
     {
-        speed_pid_1 = new pyro::pid_ctrl_t(24.0f, 0.1f, 0.00f);
-        speed_pid_2 = new pyro::pid_ctrl_t(24.0f, 0.1f, 0.00f);
-        speed_pid_3 = new pyro::pid_ctrl_t(20.0f, 0.1f, 0.00f);
-        speed_pid_4 = new pyro::pid_ctrl_t(20.0f, 0.1f, 0.00f);
-
-        speed_pid_1->set_output_limits(100.0f);
-        speed_pid_2->set_output_limits(100.0f);
-        speed_pid_3->set_output_limits(100.0f);
-        speed_pid_4->set_output_limits(100.0f);
-
-        rudder_position_pid_1 = new pyro::pid_ctrl_t(20.0f, 0.0f, 0.00f);
-        rudder_position_pid_2 = new pyro::pid_ctrl_t(20.0f, 0.0f, 0.00f);
-        rudder_rotate_pid_1 = new pyro::pid_ctrl_t(0.3f, 0.0f, 0.00f);
-        rudder_rotate_pid_2 = new pyro::pid_ctrl_t(0.3f, 0.0f, 0.00f);
-
-        rudder_position_pid_1->set_output_limits(1000.0f);
-        rudder_position_pid_2->set_output_limits(1000.0f);
-        rudder_rotate_pid_1->set_output_limits(3.0f);
-        rudder_rotate_pid_2->set_output_limits(3.0f);
-
-        yaw_position_pid_1 = new pyro::pid_ctrl_t(20.0f, 0.0f, 0.00f);
-        yaw_rotate_pid_1 = new pyro::pid_ctrl_t(0.1f, 0.0f, 0.00f);
-        yaw_position_pid_1->set_output_limits(1000.0f);
-        yaw_rotate_pid_1->set_output_limits(3.0f);
-        
-        m3508_drv_1 = new pyro::dji_m3508_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_1, pyro::can_hub_t::can2);
-        m3508_drv_2 = new pyro::dji_m3508_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_3, pyro::can_hub_t::can2);
-        m3508_drv_3 = new pyro::dji_m3508_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_1, pyro::can_hub_t::can1);
-        m3508_drv_4 = new pyro::dji_m3508_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_2, pyro::can_hub_t::can1);
-
-        gm6020_drv_1 = new pyro::dji_gm_6020_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_3, pyro::can_hub_t::can2);
-        gm6020_drv_2 = new pyro::dji_gm_6020_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_1, pyro::can_hub_t::can1);
-        gm6020_drv_3 = new pyro::dji_gm_6020_motor_drv_t(
-            pyro::dji_motor_tx_frame_t::id_1, pyro::can_hub_t::can2);
-
-        wheel_drv_1 = new pyro::wheel_drv_t(
-            m3508_drv_1,
-            *speed_pid_1,
-            0.0685f);
-
-        wheel_drv_2 = new pyro::wheel_drv_t(
-            m3508_drv_2,
-            *speed_pid_2,
-            0.06f);
-
-        wheel_drv_3 = new pyro::wheel_drv_t(
-           m3508_drv_3,
-            *speed_pid_3,
-            0.06f);
-        
-        wheel_drv_4 = new pyro::wheel_drv_t(
-            m3508_drv_4,
-            *speed_pid_4,
-            0.0685f);
-
-        wheel_drv_1->set_gear_ratio(19.0f);
-        wheel_drv_2->set_gear_ratio(19.0f);
-        wheel_drv_3->set_gear_ratio(19.0f);
-        wheel_drv_4->set_gear_ratio(19.0f);
-
-        steering_wheel_drv_1 = new pyro::steering_wheel_drv_t(
-            wheel_drv_2,
-            gm6020_drv_1,
-            *rudder_rotate_pid_1,
-            *rudder_position_pid_1);
-
-        steering_wheel_drv_2 = new pyro::steering_wheel_drv_t(
-            wheel_drv_3,
-            gm6020_drv_2,
-            *rudder_rotate_pid_2,
-            *rudder_position_pid_2);
-
-        yaw_drv_1 = new pyro::yaw_drv_t(
-            gm6020_drv_3,
-            *yaw_rotate_pid_1,
-            *yaw_position_pid_1);
-
-        steering_wheel_drv_1->set_offset_radian(0.959505022f);
-        steering_wheel_drv_2->set_offset_radian(4.52447653f);
-        yaw_drv_1->set_offset_radian(0.48397094f);
-
-        chassis_drv = new pyro::chassis_drv_t(
-            steering_wheel_drv_1,
-            steering_wheel_drv_2,
-            wheel_drv_1,
-            wheel_drv_4);
+        pyro::cmd_base_t rud_cmd_obj{};
+        pyro::dr16_drv_t::dr16_ctrl_t dr16_data;
+        pyro::rud_chassis_t::instance()->start();
 
         while (true)
         {
-            pyro::read_scope_lock lock(pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16)->get_lock());
-            chassis_drv->update_feedback();
-            yaw_drv_1->update_feedback();
+            {
+                pyro::rc_drv_t *dr16_drv =
+                    pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16);
+                pyro::read_scope_lock rc_read_lock(dr16_drv->get_lock());
+                const auto *p_dr16 =
+                    static_cast<const pyro::dr16_drv_t::dr16_ctrl_t *>(
+                        dr16_drv->read());
+                if (p_dr16 != nullptr)
+                    dr16_data = *p_dr16;
+            }
+            if (abs(dr16_data.rc.ch_lx) < 0.3f &&
+                abs(dr16_data.rc.ch_ly) < 0.3f &&
+                abs(dr16_data.rc.ch_rx) < 0.3f)
+            {
+                dr16_data.rc.ch_lx = 0.0f;
+                dr16_data.rc.ch_ly = 0.0f;
+                dr16_data.rc.ch_rx = 0.0f;
+            }
 
-            yaw_drv_1->set_radian(0);
-            chassis_drv->chassis_control();
+            // chassis_control
+            if(pyro::dr16_drv_t::sw_state_t::SW_UP == dr16_data.rc.s_r.state)
+            {
+                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ZERO_FORCE;
+                rud_cmd_obj.timestamp = 0;
+                rud_cmd_obj.vx        = 0.0f;
+                rud_cmd_obj.vy        = 0.0f;
+                rud_cmd_obj.wz        = 0.0f;
+            }
+            else if (pyro::dr16_drv_t::sw_state_t::SW_MID == dr16_data.rc.s_r.state)
+            {
+                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ACTIVE;
+                rud_cmd_obj.timestamp = 0;
+                rud_cmd_obj.vx        = 1;
+                rud_cmd_obj.vy        = 1;
+                rud_cmd_obj.wz        = 1;
+            }
+            else if (pyro::dr16_drv_t::sw_state_t::SW_DOWN ==
+                     dr16_data.rc.s_r.state)
+            {
+                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ACTIVE;
+                rud_cmd_obj.timestamp = 0;
+                rud_cmd_obj.vx        = dr16_data.rc.ch_lx;
+                rud_cmd_obj.vy        = dr16_data.rc.ch_ly;
+                rud_cmd_obj.wz        = 2.0f;
+            }
 
-            vTaskDelay(1);
+            pyro::rud_chassis_t::instance()->set_command(rud_cmd_obj);
         }
     }
 }

@@ -258,6 +258,24 @@ void hybrid_chassis_t::_send_motor_command(hybrid_context_t *ctx)
     // }
 }
 
+void hybrid_chassis_t::set_wheel_initial_offset(int index, float offset)
+{
+    if (index >= 0 && index < 4) {
+        if (_ctx.motor.mecanum[index] != nullptr) {
+            _ctx.motor.mecanum[index]->set_offset(offset);
+        }
+    }
+}
+
+void hybrid_chassis_t::set_all_wheels_initial_offset(const float offsets[4])
+{
+    for (int i = 0; i < 4; i++) {
+        if (_ctx.motor.mecanum[i] != nullptr) {
+            _ctx.motor.mecanum[i]->set_offset(offsets[i]);
+        }
+    }
+}
+
 // =========================================================
 // 核心运行时
 // =========================================================

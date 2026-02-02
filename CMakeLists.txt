@@ -63,6 +63,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Core/Lock/pyro_rw_lock.cpp
         PYRo/Core/Memory/pyro_core_dma_heap.c
         PYRo/Core/Memory/pyro_core_mem.cpp
+        PYRo/Core/Task/pyro_task.cpp
 
         # --- Peripheral ---
         PYRo/Peripheral/CAN/pyro_can_drv.cpp
@@ -105,7 +106,10 @@ add_executable(${CMAKE_PROJECT_NAME}
 #        PYRo/Component/Shoot/pyro_trigger_drv.cpp
 
         # --- Module ---
-        PYRo/Moudle/Chassis/Hybrid/pyro_hybrid_chassis.cpp
+#        PYRo/Moudle/Chassis/Hybrid/pyro_hybrid_chassis.cpp
+        PYRo/Moudle/Chassis/Rudder/pyro_rud_chassis.cpp
+        PYRo/Moudle/Chassis/Rudder/fsm/pyro_rud_active_state.cpp
+        PYRo/Moudle/Chassis/Rudder/fsm/pyro_rud_passive_state.cpp
         PYRo/Moudle/Chassis/pyro_chassis_base.cpp
 
         # --- Application ---
