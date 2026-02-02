@@ -76,16 +76,12 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Algorithm/Kinematics/pyro_kin_rudder.cpp
         PYRo/Algorithm/OLS/pyro_algo_ols.cpp
         PYRo/Algorithm/PID/pyro_algo_pid.cpp
+        PYRo/Algorithm/EKF/QuaternionEKF.cpp
+        PYRo/Algorithm/KF/kalman_filter.cpp
 
         # --- Component ---
         PYRo/Component/CRC/PYRo_crc.cpp
-        PYRo/Component/IMU/AHRS.c
-        PYRo/Component/IMU/BMI088Middleware.c
-        PYRo/Component/IMU/BMI088driver.c
-        PYRo/Component/IMU/IMU_Base.c
-        PYRo/Component/IMU/IMU_Ext.c
-        PYRo/Component/IMU/MATH_LIB.c
-        PYRo/Component/IMU/PID.c
+
         PYRo/Component/Motor/pyro_dji_motor_drv.cpp
         PYRo/Component/Motor/pyro_dm_motor_drv.cpp
         PYRo/Component/Motor/pyro_motor_base.cpp
@@ -100,17 +96,18 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Component/Referee/referee.c
         PYRo/Component/Referee/referee_drv.cpp
         PYRo/Component/Referee/referee_usart_task.c
+        PYRo/Component/INS/pyro_ins.cpp
 #        PYRo/Component/Shoot/pyro_fric_drv.cpp
 #        PYRo/Component/Shoot/pyro_shoot_17mm_control.cpp
 #        PYRo/Component/Shoot/pyro_shoot_base.cpp
 #        PYRo/Component/Shoot/pyro_trigger_drv.cpp
 
         # --- Module ---
-#        PYRo/Moudle/Chassis/Hybrid/pyro_hybrid_chassis.cpp
-        PYRo/Moudle/Chassis/Rudder/pyro_rud_chassis.cpp
-        PYRo/Moudle/Chassis/Rudder/fsm/pyro_rud_active_state.cpp
-        PYRo/Moudle/Chassis/Rudder/fsm/pyro_rud_passive_state.cpp
-        PYRo/Moudle/Chassis/pyro_chassis_base.cpp
+#        PYRo/Module/Chassis/Hybrid/pyro_hybrid_chassis.cpp
+        PYRo/Module/Chassis/Rudder/pyro_rud_chassis.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_active_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_passive_state.cpp
+        PYRo/Module/pyro_module_base.cpp
 
         # --- Application ---
         PYRo/Application/Demo/demo_task.cpp
@@ -126,6 +123,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Debug/Debug_task.cpp
         PYRo/Debug/JCOM/pyro_jcom.cpp
         PYRo/Debug/VOFA/pyro_vofa.cpp
+
+        # --- Device ---
+        PYRo/Device/BMI088/BMI088_driver.cpp
+        PYRo/Device/BMI088/BMI088_middleware.cpp
 )
 
 add_subdirectory(cmake/stm32cubemx)
@@ -137,6 +138,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         PYRo/Algorithm/Kinematics
         PYRo/Algorithm/OLS
         PYRo/Algorithm/PID
+        PYRo/Algorithm/EKF
+        PYRo/Algorithm/KF
         PYRo/Component/CRC
         PYRo/Component/IMU
         PYRo/Component/Motor
@@ -145,6 +148,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         PYRo/Component/RC
         PYRo/Component/Referee
         PYRo/Component/Shoot
+        PYRo/Component/INS
         PYRo/Core/Config
         PYRo/Core/Def
         PYRo/Core/ETL
@@ -153,13 +157,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         PYRo/Core/Memory
         PYRo/Core/Task
         PYRo/Debug/VOFA
-        PYRo/Moudle/Chassis
-        PYRo/Moudle/Chassis/Hybrid
-        PYRo/Moudle/Chassis/Mecanum
-        PYRo/Moudle/Chassis/Rudder
+        PYRo/Module
+        PYRo/Module/Chassis
+        PYRo/Module/Chassis/Hybrid
+        PYRo/Module/Chassis/Mecanum
+        PYRo/Module/Chassis/Rudder
         PYRo/Peripheral/CAN
         PYRo/Peripheral/DWT
         PYRo/Peripheral/UART
+        PYRo/Device/BMI088
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
