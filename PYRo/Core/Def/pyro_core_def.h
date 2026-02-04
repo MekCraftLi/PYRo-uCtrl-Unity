@@ -28,7 +28,10 @@ constexpr float PI=3.14159265358979323846f;
                                   {                           \
                                     return PYRO_ERROR;        \
                                   }    
-
+#define CHECK_PYRO_RET(ret)     if(PYRO_OK != ret)            \
+                                  {                           \
+                                    return ret;               \
+                                  }
 #ifdef USE_LOG
 #define PYRO_ASSERT_RET(expr)((expr) ? PYRO_OK : log((uint8_t *)__FILE__, __LINE__))
 #else
