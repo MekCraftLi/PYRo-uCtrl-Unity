@@ -11,7 +11,7 @@ motor_base_t::motor_base_t(can_hub_t::which_can which)
 
 motor_base_t::~motor_base_t()
 {
-    // 基类析构函数实现（可为空）
+    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷实锟街ｏ拷锟斤拷为锟秸ｏ拷
 }
 
 int8_t motor_base_t::get_temperature(void)

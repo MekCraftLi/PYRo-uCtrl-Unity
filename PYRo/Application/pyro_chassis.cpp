@@ -1,3 +1,4 @@
+#include "pyro_core_def.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_dji_motor_drv.h"
 #include "pyro_common.h"
@@ -24,6 +25,55 @@ using namespace pyro;
 #define POLAR_K2 946100000.0f
 #define POLAR_K3 100000.0f
 
+//the cofficients of lqr gain
+//kp_11
+#define LQR_KP_11_K0 0.0f
+#define LQR_KP_11_K1 0.0f
+#define LQR_KP_11_K2 0.0f
+//kp_12
+#define LQR_KP_12_K0 0.0f
+#define LQR_KP_12_K1 0.0f
+#define LQR_KP_12_K2 0.0f
+//kp_13
+#define LQR_KP_13_K0 0.0f
+#define LQR_KP_13_K1 0.0f
+#define LQR_KP_13_K2 0.0f
+//kp_14
+#define LQR_KP_14_K0 0.0f
+#define LQR_KP_14_K1 0.0f
+#define LQR_KP_14_K2 0.0f
+//kp_15
+#define LQR_KP_15_K0 0.0f
+#define LQR_KP_15_K1 0.0f
+#define LQR_KP_15_K2 0.0f
+//kp_16
+#define LQR_KP_16_K0 0.0f
+#define LQR_KP_16_K1 0.0f
+#define LQR_KP_16_K2 0.0f
+//kp_21
+#define LQR_KP_21_K0 0.0f
+#define LQR_KP_21_K1 0.0f
+#define LQR_KP_21_K2 0.0f
+//kp_22
+#define LQR_KP_22_K0 0.0f
+#define LQR_KP_22_K1 0.0f
+#define LQR_KP_22_K2 0.0f
+//kp_23
+#define LQR_KP_23_K0 0.0f
+#define LQR_KP_23_K1 0.0f
+#define LQR_KP_23_K2 0.0f
+//kp_24
+#define LQR_KP_24_K0 0.0f
+#define LQR_KP_24_K1 0.0f
+#define LQR_KP_24_K2 0.0f
+//kp_25
+#define LQR_KP_25_K0 0.0f
+#define LQR_KP_25_K1 0.0f
+#define LQR_KP_25_K2 0.0f
+//kp_26
+#define LQR_KP_26_K0 0.0f
+#define LQR_KP_26_K1 0.0f
+#define LQR_KP_26_K2 0.0f
 #define BARYCENTER_K0 0.0332911f
 #define BARYCENTER_K1 -0.5908261f
 #define BARYCENTER_K2 0.2033493f
@@ -40,9 +90,21 @@ float r_theta1, r_theta2, l_theta1, l_theta2;
 float r_phi1, r_phi2, l_phi1, l_phi2;
 float r_alpha, l_alpha;
 float r_l, l_l;
-float r_T[2],r_F[2],l_T[2],l_F[2],T_val[4];
-float r_barycenter, l_barycenter;
-arm_matrix_instance_f32 T;
+//motor output torque
+float r_T[2],r_F[2];
+//vmc output force and torque
+float l_T[2],l_F[2];
+//vlaue of the matrix which transfoms vmc output to motor output
+float r_T_val[4], l_T_val[4];
+//state variables vectors
+float r_X[6], l_X[6];
+//value of lqr gain matrix
+float r_K_val[12], l_K_val[12];
+//transformation matrix instance
+arm_matrix_instance_f32 r_T_mat, l_T_mat;
+//lqr gain matrix instance
+arm_matrix_instance_f32 r_K_mat, l_K_mat;
+
 rc_drv_t *dr16_drv;
 
 float calc_barycenter(float leg_length);
@@ -57,7 +119,7 @@ status_t kinomatic_solve(float theta1, float theta2,
 void update_transform_matrix(float phi1, float phi2,
                              float theta1, float theta2,
                              float alpha, float l, float* T);
-
+status_t update_lqr_gain_matrix(float l, float* K_val);
 
 extern "C" void pyro_chassis(void* argument)
 {
@@ -67,8 +129,11 @@ extern "C" void pyro_chassis(void* argument)
     dr16_drv = pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16);
 
     //Init matrix
-    arm_mat_init_f32(&T, 2, 2, T_val);
-    
+    arm_mat_init_f32(&r_T_mat, 2, 2, r_T_val);
+    arm_mat_init_f32(&l_T_mat, 2, 2, l_T_val);
+    arm_mat_init_f32(&r_K_mat, 2, 6, r_K_val);
+    arm_mat_init_f32(&l_K_mat, 2, 6, l_K_val);
+
     //Init motors
     r_motor1 = new dm_motor_drv_t(0x01, 0x11,
                                                      can_hub_t::can1);
@@ -97,34 +162,33 @@ extern "C" void pyro_chassis(void* argument)
                                                         can_hub_t::can2);
     while(1)
     {   
+        //update date of motor and rc
+        update_feedback();
+        //kinomatic solve
+        kinomatic_solve(r_theta1, r_theta2, 
+                        &r_phi1, &r_phi2, 
+                        &r_alpha, &r_l);
+        kinomatic_solve(l_theta1, l_theta2, 
+                        &l_phi1, &l_phi2,
+                        &l_alpha, &l_l);
+        //update lqr gain matrix
+        update_lqr_gain_matrix(r_l, r_K_val);
+        update_lqr_gain_matrix(l_l, l_K_val);
 
-        float temp1, temp2;
-        // update the angle of motor
-           // caculate other angle
+        //calculate the vmc target force and torque
+
+
+
+        
         // VMC transform
         r_F[0] = 1.0f;
         r_F[1] = 1.0f;
         
-        r_barycenter = calc_barycenter(r_l); 
         update_transform_matrix(r_phi1, r_phi2, 
                               r_theta1, r_theta2,
-                               r_alpha, r_l, T.pData);
-        arm_mat_vec_mult_f32(&T, r_F, r_T);
-            arm_sqrt_f32(  (PHI_K1 - PHI_K2*arm_cos_f32(r_theta1 - r_theta2) - PHI_K3*arm_cos_f32(2*r_theta1 - 2*r_theta2)), &temp1);
-        arm_atan2_f32((PHI_K0*arm_sin_f32(r_theta1) - PHI_K0*arm_sin_f32(r_theta2)+temp1) /(PHI_K0*arm_cos_f32(r_theta1) - PHI_K0*arm_cos_f32(r_theta2) + PHI_K4*arm_cos_f32(r_theta1 - r_theta2) - PHI_K4),1.0f,&temp2);
-        r_phi1 = (2 * temp2);
-        arm_atan2_f32((PHI_K0*arm_sin_f32(r_theta1) - PHI_K0*arm_sin_f32(r_theta2)+temp1) /(PHI_K0*arm_cos_f32(r_theta1) - PHI_K0*arm_cos_f32(r_theta2) - PHI_K4*arm_cos_f32(r_theta1 - r_theta2) + PHI_K4),1.0f,&temp2);
-        r_phi2 = (2 * temp2);  
-        arm_atan2_f32((POLAR_K0*arm_sin_f32(r_phi1))/POLAR_K2 + (POLAR_K1*arm_sin_f32(r_theta1))/POLAR_K3, (POLAR_K0*arm_cos_f32(r_phi1))/POLAR_K2 + (POLAR_K1*arm_cos_f32(r_theta1))/POLAR_K3, &r_alpha);
-        
-        // caculate the position in polar coordinates
-        temp1 = (POLAR_K0*arm_cos_f32(r_phi1))/POLAR_K2 + (POLAR_K1*arm_cos_f32(r_theta1))/POLAR_K3;
-        temp1 = temp1 * temp1;
-        temp2 = (POLAR_K0*arm_sin_f32(r_phi1))/POLAR_K2 + (POLAR_K1*arm_sin_f32(r_theta1))/POLAR_K3;
-        temp2 = temp2 * temp2;
-        arm_sqrt_f32(temp1 + temp2, &r_l);
-
-
+                               r_alpha, r_l, r_T_val);
+        arm_mat_vec_mult_f32(&r_T_mat, r_F, r_T);
+            
         vTaskDelay(1);
 
     }
@@ -220,6 +284,54 @@ status_t update_feedback(void)
     l_theta2 =  (l_motor2->get_current_position()) + L_MOTOR2_OFFSET;
 
 }
+
+status_t kinomatic_solve(float theta1, float theta2,
+                         float* phi1, float* phi2,
+                         float* alpha, float* l)
+{
+    arm_status ret;
+    //1.Calculate phi1, phi2
+    float temp1, temp2;  //two temporary variables to store claculation results
+    //1.1 calculate the molecule of phi1 and phi2
+    ret = arm_sqrt_f32(  (PHI_K1 - PHI_K2*arm_cos_f32(theta1 - theta2) - 
+                    PHI_K3*arm_cos_f32(2*theta1 - 2*theta2)), &temp1);
+    CHECK_ARM_MATH_RET(ret);
+    temp1 = PHI_K0*arm_sin_f32(theta1) - PHI_K0*arm_sin_f32(theta2)+temp1;
+    //1.2 calculate phi1
+    ret = arm_atan2_f32(temp1, (PHI_K0*arm_cos_f32(theta1)
+         - PHI_K0*arm_cos_f32(theta2) + PHI_K4*arm_cos_f32(theta1 - theta2)
+         - PHI_K4), &temp2);
+    CHECK_ARM_MATH_RET(ret);
+    *phi1 = (2 * temp2);
+    //1.3 calculate phi2, the diffrenece with phi1 is the sign of K4 cos theta1 
+    // and constant K4
+    ret = arm_atan2_f32(temp1, (PHI_K0*arm_cos_f32(theta1)
+         - PHI_K0*arm_cos_f32(theta2) - PHI_K4*arm_cos_f32(theta1 - theta2)
+         + PHI_K4), &temp2);
+    CHECK_ARM_MATH_RET(ret);
+    *phi2 = (2 * temp2);  
+
+    //2. Calculate the position in polar coordinates
+    //2.1 calculate alpha
+    ret = arm_atan2_f32((POLAR_K0*arm_sin_f32(*phi1))/POLAR_K2 
+        + (POLAR_K1*arm_sin_f32(theta1))/POLAR_K3,
+    (POLAR_K0*arm_cos_f32(*phi1))/POLAR_K2 
+        + (POLAR_K1*arm_cos_f32(theta1))/POLAR_K3, &temp2);
+    CHECK_ARM_MATH_RET(ret);
+    *alpha = temp2;
+    //2.2 calculate l 
+    temp1 = (POLAR_K0*arm_cos_f32(*phi1))/POLAR_K2 + 
+                            (POLAR_K1*arm_cos_f32(theta1))/POLAR_K3;
+    temp1 = temp1 * temp1;
+    temp2 = (POLAR_K0*arm_sin_f32(*phi1))/POLAR_K2 +
+                            (POLAR_K1*arm_sin_f32(theta1))/POLAR_K3;
+    temp2 = temp2 * temp2;
+    ret = arm_sqrt_f32(temp1 + temp2, l);
+    CHECK_ARM_MATH_RET(ret);
+    return PYRO_OK;
+
+}
+ 
 void update_transform_matrix(float phi1, float phi2,
                              float theta1, float theta2,
                              float alpha, float l, float* T)
@@ -229,6 +341,27 @@ void update_transform_matrix(float phi1, float phi2,
     T[2] = (21059*arm_cos_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_cos_f32(phi1)*arm_sin_f32(alpha)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2));
     T[3] = ((21059*arm_cos_f32(alpha)*arm_cos_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)))/l; 
 
+}
+
+status_t update_lqr_gain_matrix(float l, float* K_val)
+{
+    if(NULL == K_val)
+    {
+        return PYRO_PARAM_ERROR;
+    }
+    K_val[0]  = LQR_KP_11_K0 + LQR_KP_11_K1 * l + LQR_KP_11_K2 * l * l;
+    K_val[1]  = LQR_KP_12_K0 + LQR_KP_12_K1 * l + LQR_KP_12_K2 * l * l;
+    K_val[2]  = LQR_KP_13_K0 + LQR_KP_13_K1 * l + LQR_KP_13_K2 * l * l;
+    K_val[3]  = LQR_KP_14_K0 + LQR_KP_14_K1 * l + LQR_KP_14_K2 * l * l;
+    K_val[4]  = LQR_KP_15_K0 + LQR_KP_15_K1 * l + LQR_KP_15_K2 * l * l;
+    K_val[5]  = LQR_KP_16_K0 + LQR_KP_16_K1 * l + LQR_KP_16_K2 * l * l;
+    K_val[6]  = LQR_KP_21_K0 + LQR_KP_21_K1 * l + LQR_KP_21_K2 * l * l;
+    K_val[7]  = LQR_KP_22_K0 + LQR_KP_22_K1 * l + LQR_KP_22_K2 * l * l;
+    K_val[8]  = LQR_KP_23_K0 + LQR_KP_23_K1 * l + LQR_KP_23_K2 * l * l;
+    K_val[9]  = LQR_KP_24_K0 + LQR_KP_24_K1 * l + LQR_KP_24_K2 * l * l;
+    K_val[10] = LQR_KP_25_K0 + LQR_KP_25_K1 * l + LQR_KP_25_K2 * l * l;
+    K_val[11] = LQR_KP_26_K0 + LQR_KP_26_K1 * l + LQR_KP_26_K2 * l * l;
+    return PYRO_OK;
 }
 
 
