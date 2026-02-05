@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 
+# 设置机器人ID
+
+# 包含机器人配置（定义ROBOT_NAME）
+include(${CMAKE_CURRENT_SOURCE_DIR}/PYRo/cmake/config/pyro_robot_id_config.cmake)
+
+
 # ==============================================================================
 # 1. 编译器与工具链配置 (已由 gcc-arm-none-eabi.cmake 处理)
 # ==============================================================================

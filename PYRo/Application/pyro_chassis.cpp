@@ -2,7 +2,6 @@
 #include "pyro_dm_motor_drv.h"
 #include "pyro_dji_motor_drv.h"
 #include "pyro_ins.h"
-#include "pyro_common.h"
 #include "arm_math.h"
 #include "pyro_rc_hub.h"
 
