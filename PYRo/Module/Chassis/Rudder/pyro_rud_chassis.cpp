@@ -64,10 +64,10 @@ void rud_chassis_t::_init()
     _ctx.motor.yaw->set_rotate_range(-20, 20);
     _ctx.motor.yaw->set_torque_range(-10, 10);
 
-    _ctx.pid.wheel_pid[0]   = new pid_t(24.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[1]   = new pid_t(24.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[2]   = new pid_t(24.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[3]   = new pid_t(24.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+    _ctx.pid.wheel_pid[0]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+    _ctx.pid.wheel_pid[1]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+    _ctx.pid.wheel_pid[2]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+    _ctx.pid.wheel_pid[3]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
 
     _ctx.pid.rud_pos_pid[0] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
     _ctx.pid.rud_pos_pid[1] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);

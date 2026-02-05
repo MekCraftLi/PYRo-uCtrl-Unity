@@ -103,7 +103,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 
     enum class drive_mode_t
     {
-        MOVING, // Normal driving mode
+        MOVING,  // Normal driving mode
         BRAKING, // Braking mode (Stopping)
         TURNING,
     };
@@ -139,7 +139,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 
     struct fsm_active_t : public fsm_t<owner>
     {
-        //子状态
+        // 子状态
         struct state_moving_t : public state_t<owner>
         {
             void enter(owner *owner) override;
@@ -165,7 +165,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         void on_execute(owner *owner) override;
         void on_exit(owner *owner) override;
 
-      private :
+      private:
         state_moving_t _moving_state;
         state_braking_t _braking_state;
         state_turning_t _turning_state;
