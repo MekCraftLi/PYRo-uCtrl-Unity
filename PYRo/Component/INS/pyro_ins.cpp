@@ -19,7 +19,7 @@ using namespace pyro;
 #if ROBOT_ID == TEST_ROBOT_ID
 #define IMU_DIRECT IMU_DIRECT_8
 #elif ROBOT_ID == HERO_ID
-#define IMU_DIRECT IMU_DIRECT_1
+#define IMU_DIRECT IMU_DIRECT_4
 #elif ROBOT_ID == SUB_HERO_ID
 #define IMU_DIRECT IMU_DIRECT_1
 #elif ROBOT_ID == ENGINEER_ID
@@ -101,9 +101,7 @@ using namespace pyro;
 
 #endif 
 
-float test_gyro[3];
-float test_accl[3];
-float test_q[4];
+
 // Define static TaskHandle_t declared in pyro::ins_drv_t
 TaskHandle_t pyro::ins_drv_t::_ins_task_handle = nullptr;
 
@@ -184,16 +182,10 @@ void ins_drv_t::__ins_task()
             _gyro_b[Z] = imu_data.Gyro[IMU_Z];
         }
         
-        test_gyro[X] = _gyro_b[X];
-        test_gyro[Y] = _gyro_b[Y];
-        test_gyro[Z] = _gyro_b[Z];
-        test_accl[X] = _acc_b[X];
-        test_accl[Y] = _acc_b[Y];
-        test_accl[Z] = _acc_b[Z];
+
         
         IMU_QuaternionEKF_Update(_gyro_b[X], _gyro_b[Y], _gyro_b[Z], _acc_b[X], _acc_b[Y], _acc_b[Z], _dt);
         memcpy(_q, QEKF_INS.q, sizeof(QEKF_INS.q));
-        memcpy(test_q, QEKF_INS.q, sizeof(QEKF_INS.q));
 
 
         _angle_n[X] = QEKF_INS.Roll;
@@ -225,6 +217,30 @@ status_t ins_drv_t::get_angles_n(float* yaw, float* pitch, float* roll)
     *roll = _angle_n[X];
     *pitch = _angle_n[Y];
     *yaw = _angle_n[Z];
+    return PYRO_OK;
+}
+
+status_t ins_drv_t::get_rads_b(float* rad_yaw, float* rad_pitch, float* rad_roll)
+{
+    if(rad_roll == nullptr || rad_pitch == nullptr || rad_yaw == nullptr)
+    {
+        return PYRO_ERROR;
+    }
+    *rad_roll = _angle_n[X] * PI / 180.0f;
+    *rad_pitch = _angle_n[Y] * PI / 180.0f;
+    *rad_yaw = _angle_n[Z] * PI / 180.0f;
+    return PYRO_OK;
+}
+
+status_t ins_drv_t::get_rads_n(float* rad_yaw, float* rad_pitch, float* rad_roll)
+{
+    if(rad_roll == nullptr || rad_pitch == nullptr || rad_yaw == nullptr)
+    {
+        return PYRO_ERROR;
+    }
+    *rad_roll = _angle_n[X] * PI / 180.0f;
+    *rad_pitch = _angle_n[Y] * PI / 180.0f;
+    *rad_yaw = _angle_n[Z] * PI / 180.0f;
     return PYRO_OK;
 }
 

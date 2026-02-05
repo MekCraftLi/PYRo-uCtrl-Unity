@@ -11,7 +11,6 @@ motor_base_t::motor_base_t(can_hub_t::which_can which)
 
 motor_base_t::~motor_base_t()
 {
-    // ������������ʵ�֣���Ϊ�գ�
 }
 
 int8_t motor_base_t::get_temperature(void)
@@ -39,4 +38,5 @@ bool motor_base_t::is_enable(void)
     return _enable;
 }
 
-};
+
+} // namespace pyro
