@@ -47,7 +47,11 @@ target_include_directories(CMSISDSP PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Include"
 )
 
-add_library(dsppp_lib INTERFACE)
+add_library(dsppp_lib INTERFACE
+        PYRo/Module/Yaw/pyro_yaw.h
+        PYRo/Module/Yaw/fsm/pyro_yaw_active_state.cpp
+        PYRo/Module/Yaw/fsm/pyro_yaw_passive_state.cpp
+        PYRo/Module/Yaw/pyro_yaw.cpp)
 target_include_directories(dsppp_lib INTERFACE
         ${DSP_REPO}/dsppp/Include
         ${DSP_REPO}/Include
@@ -103,6 +107,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 #        PYRo/Component/Shoot/pyro_trigger_drv.cpp
 
         # --- Module ---
+        PYRo/Module
 #        PYRo/Module/Chassis/Hybrid/pyro_hybrid_chassis.cpp
         PYRo/Module/Chassis/Rudder/pyro_rud_chassis.cpp
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_active_state.cpp
@@ -127,6 +132,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         # --- Device ---
         PYRo/Device/BMI088/BMI088_driver.cpp
         PYRo/Device/BMI088/BMI088_middleware.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_moving_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_braking_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_turning_state.cpp
 )
 
 add_subdirectory(cmake/stm32cubemx)

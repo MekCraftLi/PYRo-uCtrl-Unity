@@ -20,7 +20,7 @@ struct hybrid_cmd_t : cmd_base_t
     hybrid_kin_t::drive_mode_t drive_mode;
     uint8_t leg_contract_mode;
     uint8_t jump_mode;
-    float vx,vy,wz,wy;
+    float vx, vy, wz, wy;
 
     hybrid_cmd_t()
         : drive_mode(hybrid_kin_t::drive_mode_t::CRUISING),
@@ -48,10 +48,6 @@ class hybrid_chassis_t final
   public:
     hybrid_chassis_t(const hybrid_chassis_t &)            = delete;
     hybrid_chassis_t &operator=(const hybrid_chassis_t &) = delete;
-
-    // 添加设置轮子初始量的方法
-    void set_wheel_initial_offset(int index, float offset);
-    void set_all_wheels_initial_offset(const float offsets[4]);
 
   private:
     hybrid_chassis_t();

@@ -14,7 +14,7 @@ extern "C"
 {
     void pyro_control_demo(void *arg)
     {
-        pyro::cmd_base_t rud_cmd_obj{};
+        pyro::rud_cmd_t rud_cmd_obj{};
         pyro::dr16_drv_t::dr16_ctrl_t dr16_data;
         pyro::rud_chassis_t::instance()->start();
 
@@ -52,9 +52,9 @@ extern "C"
             {
                 rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ACTIVE;
                 rud_cmd_obj.timestamp = 0;
-                rud_cmd_obj.vx        = 1;
-                rud_cmd_obj.vy        = 1;
-                rud_cmd_obj.wz        = 1;
+                rud_cmd_obj.vx        = dr16_data.rc.ch_lx * 2.0f;
+                rud_cmd_obj.vy        = dr16_data.rc.ch_ly * 2.0f;
+                rud_cmd_obj.wz        = dr16_data.rc.ch_rx;
             }
             else if (pyro::dr16_drv_t::sw_state_t::SW_DOWN ==
                      dr16_data.rc.s_r.state)

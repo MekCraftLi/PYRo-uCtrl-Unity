@@ -1,13 +1,16 @@
 #ifndef __PYRO_RUD_CHASSIS_H__
 #define __PYRO_RUD_CHASSIS_H__
 
+#define POWER_CONTROL_USE 0
+
 #include "pyro_algo_pid.h"
-#include "pyro_chassis_base.h"
+#include "pyro_module_base.h"
 #include "pyro_dji_motor_drv.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_kin_rudder.h"
 #include "pyro_motor_base.h"
 #include "pyro_powermeter.h"
+#include "pyro_power_control_drv.h"
 
 namespace pyro
 {
@@ -15,13 +18,16 @@ namespace pyro
 // 定义舵轮特有的命令结构（如果有额外参数）
 struct rud_cmd_t : cmd_base_t
 {
-    rud_cmd_t();
+    float vx, vy, wz;
+    rud_cmd_t() : vx(0), vy(0), wz(0)
+    {
+    }
 };
 
 // 继承模板基类，传入具体的命令类型
-class rud_chassis_t final 
-    : public chassis_base_t<rud_chassis_t, rud_cmd_t>
+class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 {
+    friend class module_base_t;
     friend class chassis_base_t;
     friend class vofa_drv_t;
 
@@ -29,14 +35,10 @@ class rud_chassis_t final
     struct pid_ctx_t;
     struct data_ctx_t;
     struct rud_ctx_t;
-    
+
   public:
     rud_chassis_t(const rud_chassis_t &)            = delete;
     rud_chassis_t &operator=(const rud_chassis_t &) = delete;
-
-    // 添加设置轮子初始量的方法
-    void set_wheel_initial_offset(int index, float offset);
-    void set_all_wheels_initial_offset(const float offsets[4]);
 
   private:
     rud_chassis_t();
@@ -59,6 +61,7 @@ class rud_chassis_t final
     {
         motor_base_t *rudder[4]{nullptr};
         motor_base_t *wheel[4]{nullptr};
+        dm_motor_drv_t *yaw{nullptr};
     };
 
     struct pid_ctx_t
@@ -66,17 +69,23 @@ class rud_chassis_t final
         pid_t *rud_pos_pid[4]{nullptr};
         pid_t *rud_spd_pid[4]{nullptr};
         pid_t *wheel_pid[4]{nullptr};
+        pid_t *yaw_pos_pid{nullptr};
+        pid_t *yaw_spd_pid{nullptr};
+    };
+
+    struct config_ctx_t
+    {
+        float rudder_pos_moving_offset[4]{};
+        float rudder_pos_braking_offset[4]{};
+        float yaw_offset{};
     };
 
     struct data_ctx_t
     {
-        float current_rud_rad[4]{};
-        float current_rud_radps[4]{};
-        float current_wheel_rpm[4]{};
+        rudder_kin_t::rudder_states_t current_states{};
+        rudder_kin_t::rudder_states_t target_states{};
 
-        float target_rud_rad[4]{};
-        float target_rud_radps[4]{};
-        float target_wheel_rpm[4]{};
+        float current_rud_radps[4];
 
         float out_rud_torque[4]{};
         float out_wheel_torque[4]{};
@@ -92,6 +101,13 @@ class rud_chassis_t final
         powermeter_data *data{nullptr};
     };
 
+    enum class drive_mode_t
+    {
+        MOVING, // Normal driving mode
+        BRAKING, // Braking mode (Stopping)
+        TURNING,
+    };
+
     struct rud_ctx_t
     {
         motor_ctx_t motor;
@@ -99,7 +115,9 @@ class rud_chassis_t final
         hardware_ctx_t hardware;
         power_ctx_t power;
         data_ctx_t data;
-        cmd_base_t *cmd;
+        config_ctx_t config;
+        rud_cmd_t *cmd;
+        drive_mode_t drive_mode = drive_mode_t::BRAKING;
     };
 
     struct debug_ctx_t
@@ -119,18 +137,47 @@ class rud_chassis_t final
         void exit(owner *owner) override;
     };
 
-    struct state_active_t : public state_t<owner>
+    struct fsm_active_t : public fsm_t<owner>
     {
-        void enter(owner *owner) override;
-        void execute(owner *owner) override;
-        void exit(owner *owner) override;
+        //子状态
+        struct state_moving_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        struct state_braking_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        struct state_turning_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        void on_enter(owner *owner) override;
+        void on_execute(owner *owner) override;
+        void on_exit(owner *owner) override;
+
+      private :
+        state_moving_t _moving_state;
+        state_braking_t _braking_state;
+        state_turning_t _turning_state;
     };
 
     state_passive_t _state_passive;
-    state_active_t _state_active;
+    fsm_active_t _state_active;
     fsm_t<owner> _main_fsm;
 
-    static constexpr float RUD_RADIUS   = 0.050f;
+    static constexpr float RUD_RADIUS         = 0.060f;
+    static constexpr uint8_t POWERCONTROL_NUM = 4;
+    static constexpr uint8_t POWER_LIMIT      = 80;
 };
 
 } // namespace pyro
