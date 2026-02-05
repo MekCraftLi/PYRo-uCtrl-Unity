@@ -38,7 +38,6 @@
 #define DARTS_ID 8
 #define RADAR_ID 9
 
-#define ROBOT_ID HERO_ID
 
 #if ROBOT_ID == HERO_ID
 
