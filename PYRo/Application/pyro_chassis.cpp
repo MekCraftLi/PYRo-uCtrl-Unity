@@ -1,6 +1,7 @@
 #include "pyro_core_def.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_dji_motor_drv.h"
+#include "pyro_ins.h"
 #include "pyro_common.h"
 #include "arm_math.h"
 #include "pyro_rc_hub.h"
@@ -25,6 +26,9 @@ using namespace pyro;
 #define POLAR_K2 946100000.0f
 #define POLAR_K3 100000.0f
 
+//the cofficients for transformation matrix
+#define TRANS_K0 21059.0f
+#define TRANS_K1 100000.0f
 //the cofficients of lqr gain
 //kp_11
 #define LQR_KP_11_K0 0.0f
@@ -75,9 +79,10 @@ using namespace pyro;
 #define LQR_KP_26_K1 0.0f
 #define LQR_KP_26_K2 0.0f
 #define BARYCENTER_K0 0.0332911f
-#define BARYCENTER_K1 -0.5908261f
 #define BARYCENTER_K2 0.2033493f
+#define BARYCENTER_K1 -0.5908261f
 const pyro::dr16_drv_t::dr16_ctrl_t *rc_data;
+ins_drv_t* ins;
 
 dm_motor_drv_t* r_motor1;
 dm_motor_drv_t* r_motor2;
@@ -86,10 +91,19 @@ dm_motor_drv_t* l_motor2;
 dji_m3508_motor_drv_t* r_wheel;
 dji_m3508_motor_drv_t* l_wheel;
 
+float yaw, pitch, roll;
+float g_yaw, g_pitch, g_roll;
+float acc_x, acc_y, acc_z;
+
 float r_theta1, r_theta2, l_theta1, l_theta2;
 float r_phi1, r_phi2, l_phi1, l_phi2;
 float r_alpha, l_alpha;
 float r_l, l_l;
+
+//state variables
+float x, d_x;
+float beta, d_beta;
+float gamma, d_gamma;
 //motor output torque
 float r_T[2],r_F[2];
 //vmc output force and torque
@@ -127,6 +141,9 @@ extern "C" void pyro_chassis(void* argument)
 
     //Init RC
     dr16_drv = pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16);
+
+    //Init INS
+    ins = ins_drv_t::get_instance();
 
     //Init matrix
     arm_mat_init_f32(&r_T_mat, 2, 2, r_T_val);
@@ -261,6 +278,10 @@ status_t update_feedback(void)
     read_scope_lock rc_read_lock(dr16_drv->get_lock());
     rc_data = static_cast<const pyro::dr16_drv_t::dr16_ctrl_t *>(
                                                             dr16_drv->read());
+    //update INS data
+    ins->get_angles_n(&yaw, &pitch, &roll);
+    ins->get_gyro_n(&g_yaw, &g_pitch, &g_roll);
+
     //update motor feedback
     ret = r_motor1->update_feedback();
     CHECK_PYRO_RET(ret);
@@ -283,6 +304,7 @@ status_t update_feedback(void)
     l_theta1 =  (l_motor1->get_current_position()) + L_MOTOR1_OFFSET;
     l_theta2 =  (l_motor2->get_current_position()) + L_MOTOR2_OFFSET;
 
+    return PYRO_OK;
 }
 
 status_t kinomatic_solve(float theta1, float theta2,
@@ -336,10 +358,22 @@ void update_transform_matrix(float phi1, float phi2,
                              float theta1, float theta2,
                              float alpha, float l, float* T)
 {
-    T[0] = (21059*arm_cos_f32(phi2)*arm_sin_f32(alpha)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_cos_f32(alpha)*arm_sin_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2));
-    T[1] = -((21059*arm_cos_f32(alpha)*arm_cos_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi2)*arm_sin_f32(phi1 - theta1))/(100000*arm_sin_f32(phi1 - phi2)))/l;
-    T[2] = (21059*arm_cos_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_cos_f32(phi1)*arm_sin_f32(alpha)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2));
-    T[3] = ((21059*arm_cos_f32(alpha)*arm_cos_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)) - (21059*arm_sin_f32(alpha)*arm_sin_f32(phi1)*arm_sin_f32(phi2 - theta2))/(100000*arm_sin_f32(phi1 - phi2)))/l; 
+    T[0] = (TRANS_K0*arm_cos_f32(phi2)*arm_sin_f32(alpha)
+        *arm_sin_f32(phi1 - theta1))/(TRANS_K1*arm_sin_f32(phi1 - phi2)) 
+        - (TRANS_K0*arm_cos_f32(alpha)*arm_sin_f32(phi2)
+        *arm_sin_f32(phi1 - theta1))/(TRANS_K1*arm_sin_f32(phi1 - phi2));
+    T[1] = -((TRANS_K0*arm_cos_f32(alpha)*arm_cos_f32(phi2)
+        *arm_sin_f32(phi1 - theta1))/(TRANS_K1*arm_sin_f32(phi1 - phi2)) 
+        - (TRANS_K0*arm_sin_f32(alpha)*arm_sin_f32(phi2)
+        *arm_sin_f32(phi1 - theta1))/(TRANS_K1*arm_sin_f32(phi1 - phi2)))/l;
+    T[2] = (TRANS_K0*arm_cos_f32(alpha)*arm_sin_f32(phi1)
+        *arm_sin_f32(phi2 - theta2))/(TRANS_K1*arm_sin_f32(phi1 - phi2)) 
+        - (TRANS_K0*arm_cos_f32(phi1)*arm_sin_f32(alpha)
+        *arm_sin_f32(phi2 - theta2))/(TRANS_K1*arm_sin_f32(phi1 - phi2));
+    T[3] = ((TRANS_K0*arm_cos_f32(alpha)*arm_cos_f32(phi1)
+        *arm_sin_f32(phi2 - theta2))/(TRANS_K1*arm_sin_f32(phi1 - phi2)) 
+        - (TRANS_K0*arm_sin_f32(alpha)*arm_sin_f32(phi1)
+        *arm_sin_f32(phi2 - theta2))/(TRANS_K1*arm_sin_f32(phi1 - phi2)))/l; 
 
 }
 
