@@ -59,11 +59,6 @@ void rud_chassis_t::_init()
         new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4,
                                   can_hub_t::can1); // FR Wheel
 
-    _ctx.motor.yaw = new dm_motor_drv_t(0x30, 0x40, pyro::can_hub_t::can2);
-    _ctx.motor.yaw->set_position_range(-PI, PI);
-    _ctx.motor.yaw->set_rotate_range(-20, 20);
-    _ctx.motor.yaw->set_torque_range(-10, 10);
-
     _ctx.pid.wheel_pid[0]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
     _ctx.pid.wheel_pid[1]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
     _ctx.pid.wheel_pid[2]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
@@ -79,16 +74,12 @@ void rud_chassis_t::_init()
     _ctx.pid.rud_spd_pid[2] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
     _ctx.pid.rud_spd_pid[3] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
 
-    _ctx.pid.yaw_pos_pid =
-        new pid_t(20.0f, 0.2f, 0.02f, 0.5f, 10.0f, 15, 150, 4);
-    _ctx.pid.yaw_spd_pid =
-        new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
+    _ctx.pid.follow_yaw_pid = new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
 
-    _ctx.config.rudder_pos_moving_offset[0]      = 1.01472831f;
-    _ctx.config.rudder_pos_moving_offset[1]      = -0.29145637f;
-    _ctx.config.rudder_pos_moving_offset[2]      = -1.87299052f;
-    _ctx.config.rudder_pos_moving_offset[3]      = -1.04003897f;
-    _ctx.config.yaw_offset                = 0.0f;
+    _ctx.config.rudder_pos_moving_offset[0] = 1.01472831f;
+    _ctx.config.rudder_pos_moving_offset[1] = -0.29145637f;
+    _ctx.config.rudder_pos_moving_offset[2] = -1.87299052f;
+    _ctx.config.rudder_pos_moving_offset[3] = -1.04003897f;
 
     power_control_drv_t &power_controller = power_control_drv_t::get_instance();
     power_control_drv_t::motor_coefficient_t coef1;
@@ -181,6 +172,11 @@ void rud_chassis_t::_update_feedback()
 
 void rud_chassis_t::_kinematics_solve()
 {
+    if (_ctx.cmd->follow_yaw == true)
+    {
+        _ctx.cmd->wz =
+            _ctx.pid.follow_yaw_pid->calculate(0, _ctx.cmd->yaw_error);
+    }
     _ctx.data.target_states = _kinematics->solve(
         _ctx.cmd->vx, _ctx.cmd->vy, _ctx.cmd->wz, _ctx.data.current_states);
 }

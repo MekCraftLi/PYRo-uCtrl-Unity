@@ -7,6 +7,7 @@
 #include "pyro_rud_chassis.h"
 #include "pyro_rw_lock.h"
 #include "stm32h723xx.h"
+#include "Yaw/pyro_yaw.h"
 
 #ifdef __cplusplus
 
@@ -15,8 +16,11 @@ extern "C"
     void pyro_control_demo(void *arg)
     {
         pyro::rud_cmd_t rud_cmd_obj{};
+        pyro::yaw_cmd_t yaw_cmd_obj{};
         pyro::dr16_drv_t::dr16_ctrl_t dr16_data;
+
         pyro::rud_chassis_t::instance()->start();
+        pyro::yaw_t::instance()->start();
 
         while (true)
         {
@@ -40,33 +44,55 @@ extern "C"
             }
 
             // chassis_control
-            if(pyro::dr16_drv_t::sw_state_t::SW_UP == dr16_data.rc.s_r.state)
+            if (pyro::dr16_drv_t::sw_state_t::SW_UP == dr16_data.rc.s_r.state)
             {
-                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ZERO_FORCE;
-                rud_cmd_obj.timestamp = 0;
-                rud_cmd_obj.vx        = 0.0f;
-                rud_cmd_obj.vy        = 0.0f;
-                rud_cmd_obj.wz        = 0.0f;
+                rud_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ZERO_FORCE;
+                yaw_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ZERO_FORCE;
+                rud_cmd_obj.follow_yaw = false;
+                rud_cmd_obj.timestamp  = 0;
+                rud_cmd_obj.vx         = 0.0f;
+                rud_cmd_obj.vy         = 0.0f;
+                rud_cmd_obj.wz         = 0.0f;
+                rud_cmd_obj.yaw_error  = 0.0f;
             }
-            else if (pyro::dr16_drv_t::sw_state_t::SW_MID == dr16_data.rc.s_r.state)
+            else if (pyro::dr16_drv_t::sw_state_t::SW_MID ==
+                     dr16_data.rc.s_r.state)
             {
-                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ACTIVE;
-                rud_cmd_obj.timestamp = 0;
-                rud_cmd_obj.vx        = dr16_data.rc.ch_lx * 2.0f;
-                rud_cmd_obj.vy        = dr16_data.rc.ch_ly * 2.0f;
-                rud_cmd_obj.wz        = dr16_data.rc.ch_rx;
+                rud_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ACTIVE;
+                yaw_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ACTIVE;
+                rud_cmd_obj.follow_yaw = true;
+                rud_cmd_obj.timestamp  = 0;
+                rud_cmd_obj.vx         = dr16_data.rc.ch_lx * 2.0f;
+                rud_cmd_obj.vy         = dr16_data.rc.ch_ly * 2.0f;
+                yaw_cmd_obj.target_yaw_imu_angle -=
+                    dr16_data.rc.ch_rx * 0.01f;
+                rud_cmd_obj.yaw_error =
+                    pyro::yaw_t::instance()->get_yaw_error();
             }
             else if (pyro::dr16_drv_t::sw_state_t::SW_DOWN ==
                      dr16_data.rc.s_r.state)
             {
-                rud_cmd_obj.mode      = pyro::cmd_base_t::mode_t::ACTIVE;
-                rud_cmd_obj.timestamp = 0;
-                rud_cmd_obj.vx        = dr16_data.rc.ch_lx;
-                rud_cmd_obj.vy        = dr16_data.rc.ch_ly;
-                rud_cmd_obj.wz        = 2.0f;
+                rud_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ACTIVE;
+                yaw_cmd_obj.mode       = pyro::cmd_base_t::mode_t::ACTIVE;
+                rud_cmd_obj.follow_yaw = false;
+                rud_cmd_obj.timestamp  = 0;
+                rud_cmd_obj.vx =
+                    dr16_data.rc.ch_lx *
+                        cosf(pyro::yaw_t::instance()->get_yaw_error()) -
+                    dr16_data.rc.ch_ly *
+                        sinf(pyro::yaw_t::instance()->get_yaw_error());
+                rud_cmd_obj.vy =
+                    dr16_data.rc.ch_ly *
+                        cosf(pyro::yaw_t::instance()->get_yaw_error()) +
+                    dr16_data.rc.ch_lx *
+                        sinf(pyro::yaw_t::instance()->get_yaw_error());
+                rud_cmd_obj.wz = 2.0f;
             }
 
             pyro::rud_chassis_t::instance()->set_command(rud_cmd_obj);
+            pyro::yaw_t::instance()->set_command(yaw_cmd_obj);
+
+            vTaskDelay(1);
         }
     }
 }

@@ -48,10 +48,7 @@ target_include_directories(CMSISDSP PRIVATE
 )
 
 add_library(dsppp_lib INTERFACE
-        PYRo/Module/Yaw/pyro_yaw.h
-        PYRo/Module/Yaw/fsm/pyro_yaw_active_state.cpp
-        PYRo/Module/Yaw/fsm/pyro_yaw_passive_state.cpp
-        PYRo/Module/Yaw/pyro_yaw.cpp)
+)
 target_include_directories(dsppp_lib INTERFACE
         ${DSP_REPO}/dsppp/Include
         ${DSP_REPO}/Include
@@ -112,7 +109,13 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Module/Chassis/Rudder/pyro_rud_chassis.cpp
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_active_state.cpp
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_passive_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_moving_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_braking_state.cpp
+        PYRo/Module/Chassis/Rudder/fsm/pyro_rud_turning_state.cpp
         PYRo/Module/pyro_module_base.cpp
+        PYRo/Module/Yaw/pyro_yaw.cpp
+        PYRo/Module/Yaw/fsm/pyro_yaw_passive_state.cpp
+        PYRo/Module/Yaw/fsm/pyro_yaw_active_state.cpp
 
         # --- Application ---
         PYRo/Application/Demo/demo_task.cpp
@@ -170,6 +173,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         PYRo/Module/Chassis/Hybrid
         PYRo/Module/Chassis/Mecanum
         PYRo/Module/Chassis/Rudder
+        PYRo/Module/Yaw
         PYRo/Peripheral/CAN
         PYRo/Peripheral/DWT
         PYRo/Peripheral/UART

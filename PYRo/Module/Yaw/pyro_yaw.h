@@ -2,26 +2,121 @@
 // Created by pason on 2026/2/2.
 //
 
-#ifndef PYRO_PYRO_YAW_H
-#define PYRO_PYRO_YAW_H
+#ifndef PYRO_YAW_H
+#define PYRO_YAW_H
 
 #include "pyro_module_base.h"
 #include "pyro_algo_pid.h"
 #include "pyro_dji_motor_drv.h"
 #include "pyro_dm_motor_drv.h"
 #include "pyro_motor_base.h"
+#include "pyro_ins.h"
 
 namespace pyro
 {
 struct yaw_cmd_t : cmd_base_t
 {
-    float wz;
+    float target_yaw_imu_angle;
 
-    yaw_cmd_t() : wz(0)
+    yaw_cmd_t() : target_yaw_imu_angle(0)
     {
     }
 };
 
-}
+class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
+{
+    friend class module_base_t;
+    friend class vofa_drv_t;
+
+    struct motor_ctx_t;
+    struct pid_ctx_t;
+    struct data_ctx_t;
+    struct yaw_ctx_t;
+
+  public:
+    yaw_t(const yaw_t &)            = delete;
+    yaw_t &operator=(const yaw_t &) = delete;
+
+    float get_yaw_error() const;
+
+  private:
+    yaw_t();
+    ~yaw_t() override = default;
+
+    // --- 基类接口 ---
+    void _init() override;
+    void _update_feedback() override;
+    void _fsm_execute() override;
+
+    // --- 派生方法 ---
+    static void _yaw_control(yaw_ctx_t *ctx);
+    static void _send_motor_command(yaw_ctx_t *ctx);
+
+
+    // 电机句柄
+    struct motor_ctx_t
+    {
+        dm_motor_drv_t *yaw{nullptr};
+    };
+
+    struct pid_ctx_t
+    {
+        pid_t *yaw_pos_pid{nullptr};
+        pid_t *yaw_spd_pid{nullptr};
+    };
+
+    struct config_ctx_t
+    {
+        float yaw_offset{};
+    };
+
+    struct data_ctx_t
+    {
+        float target_yaw_imu_angle;
+        float current_yaw_imu_angle;
+        float current_yaw_angle;
+        float current_yaw_radps;
+        float out_yaw_torque;
+    };
+
+    struct yaw_ctx_t
+    {
+        motor_ctx_t motor;
+        pid_ctx_t pid;
+        data_ctx_t data;
+        config_ctx_t config;
+        yaw_cmd_t *cmd;
+    };
+
+    struct debug_ctx_t
+    {
+        float debug_yaw_torque;
+    };
+
+    yaw_ctx_t _ctx;
+    debug_ctx_t debug_data;
+
+    using owner = yaw_t;
+
+    struct state_passive_t : public state_t<owner>
+    {
+        void enter(owner *owner) override;
+        void execute(owner *owner) override;
+        void exit(owner *owner) override;
+    };
+
+    struct state_active_t : public state_t<owner>
+    {
+        void enter(owner *owner) override;
+        void execute(owner *owner) override;
+        void exit(owner *owner) override;
+    };
+
+    state_passive_t _state_passive;
+    state_active_t _state_active;
+    fsm_t<owner> _main_fsm;
+};
+
+} // namespace pyro
 
 #endif // PYRO_PYRO_YAW_H

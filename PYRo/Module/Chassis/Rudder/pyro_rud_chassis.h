@@ -18,8 +18,9 @@ namespace pyro
 // 定义舵轮特有的命令结构（如果有额外参数）
 struct rud_cmd_t : cmd_base_t
 {
-    float vx, vy, wz;
-    rud_cmd_t() : vx(0), vy(0), wz(0)
+    float vx, vy, wz, yaw_error;
+    bool follow_yaw;
+    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0),follow_yaw(false)
     {
     }
 };
@@ -61,7 +62,6 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
     {
         motor_base_t *rudder[4]{nullptr};
         motor_base_t *wheel[4]{nullptr};
-        dm_motor_drv_t *yaw{nullptr};
     };
 
     struct pid_ctx_t
@@ -69,15 +69,13 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         pid_t *rud_pos_pid[4]{nullptr};
         pid_t *rud_spd_pid[4]{nullptr};
         pid_t *wheel_pid[4]{nullptr};
-        pid_t *yaw_pos_pid{nullptr};
-        pid_t *yaw_spd_pid{nullptr};
+        pid_t *follow_yaw_pid{nullptr};
     };
 
     struct config_ctx_t
     {
         float rudder_pos_moving_offset[4]{};
         float rudder_pos_braking_offset[4]{};
-        float yaw_offset{};
     };
 
     struct data_ctx_t
@@ -117,7 +115,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         data_ctx_t data;
         config_ctx_t config;
         rud_cmd_t *cmd;
-        drive_mode_t drive_mode = drive_mode_t::BRAKING;
+        drive_mode_t drive_mode;
     };
 
     struct debug_ctx_t

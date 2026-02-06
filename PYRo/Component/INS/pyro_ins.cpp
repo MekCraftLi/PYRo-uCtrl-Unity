@@ -33,7 +33,7 @@ using namespace pyro;
 #elif ROBOT_ID == SUB_INFANTRY_ID
 #define IMU_DIRECT IMU_DIRECT_1
 #elif ROBOT_ID == SENTRY_ID
-#define IMU_DIRECT IMU_DIRECT_1
+#define IMU_DIRECT IMU_DIRECT_2
 #elif ROBOT_ID == SUB_SENTRY_ID
 #define IMU_DIRECT IMU_DIRECT_1
 #elif ROBOT_ID == UAV_ID
@@ -101,6 +101,7 @@ using namespace pyro;
 
 #endif 
 
+IMU_Data_t *cimu_data;
 
 // Define static TaskHandle_t declared in pyro::ins_drv_t
 TaskHandle_t pyro::ins_drv_t::_ins_task_handle = nullptr;
@@ -113,6 +114,7 @@ ins_drv_t* ins_drv_t::get_instance(void)
 
 status_t ins_drv_t::init()
 {
+    cimu_data = &imu_data;
     for(uint16_t count = 0; BMI088_init(&hspi2, IMU_CALIGRATION_EN, &imu_data) != BMI088_NO_ERROR && count < 10; count++)
     {
        if(count >= 255) 
