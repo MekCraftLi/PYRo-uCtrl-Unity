@@ -1,8 +1,8 @@
 #ifndef __PYRO_CORE_CONFIG_H__
 #define __PYRO_CORE_CONFIG_H__
 
-#define DEMO_MODE 1
-#define DEBUG_MODE 1
+// #define DEMO_MODE 1
+// #define DEBUG_MODE 0
 
 #if DEMO_MODE
 
@@ -22,21 +22,21 @@
 
 #endif
 
-#define IMU_CALIGRATION_EN 0
-
-#define TEST_ROBOT_ID 0
-#define HERO_ID   1
-#define SUB_HERO_ID 10
-#define ENGINEER_ID 2
-#define SUB_ENGINEER_ID 20
-#define INFANTRY1_ID 3
-#define INFANTRY2_ID 4
-#define SUB_INFANTRY_ID 30
-#define SENTRY_ID 5
-#define SUB_SENTRY_ID 6
-#define UAV_ID 7
-#define DARTS_ID 8
-#define RADAR_ID 9
+// #define IMU_CALIGRATION_EN 0
+//
+// #define TEST_ROBOT_ID 0
+// #define HERO_ID   1
+// #define SUB_HERO_ID 10
+// #define ENGINEER_ID 2
+// #define SUB_ENGINEER_ID 20
+// #define INFANTRY1_ID 3
+// #define INFANTRY2_ID 4
+// #define SUB_INFANTRY_ID 30
+// #define SENTRY_ID 5
+// #define SUB_SENTRY_ID 6
+// #define UAV_ID 7
+// #define DARTS_ID 8
+// #define RADAR_ID 9
 
 
 #if ROBOT_ID == HERO_ID

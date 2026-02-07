@@ -19,7 +19,7 @@ for %%f in ("%TARGET_DIR%\*.txt") do (
 
 :: 4. 如果没文件，直接退出
 if %count%==0 (
-    echo [Batch] No .txt files found in %TARGET_DIR%
+@REM     echo [Batch] No .txt files found in %TARGET_DIR%
     exit /b 0
 )
 
