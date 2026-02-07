@@ -102,5 +102,4 @@ class module_base_t
 } // namespace pyro
 
 #include "pyro_module_base.tpp"
-
 #endif

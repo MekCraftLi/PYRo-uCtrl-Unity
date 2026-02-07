@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-# 设置机器人ID
 
 # 包含机器人配置（定义ROBOT_NAME）
 include(${CMAKE_CURRENT_SOURCE_DIR}/PYRo/cmake/config/pyro_robot_id_config.cmake)
@@ -125,7 +124,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Application/Mission/Hero/pyro_booster_app.cpp
 
 
-        # --- Moudule ---
+        # --- Module ---
+        PYRo/Module/pyro_module_base.tpp
 
         ## --- Chassis ---
         PYRo/Module/Chassis/Mecanum/pyro_mec_chassis.cpp

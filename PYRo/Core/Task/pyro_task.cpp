@@ -13,6 +13,7 @@ namespace pyro
  * @brief Constructor for task_base_t.
  * task_base_t 构造函数。
  */
+
 task_base_t::task_base_t(const char *name, const uint16_t init_stack,
                          const uint16_t loop_stack, const priority_t priority)
     : _loop_task_handle(nullptr), _task_name(name),

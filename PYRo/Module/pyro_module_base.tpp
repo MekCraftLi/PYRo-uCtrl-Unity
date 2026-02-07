@@ -86,8 +86,8 @@ void module_base_t<Derived, CmdType>::_run_loop_impl()
 
 template <typename Derived, typename CmdType>
 module_base_t<Derived, CmdType>::module_task_t::module_task_t(
-    module_base_t *owner_ptr, const char *name, const uint16_t init_stack,
-    const uint16_t loop_stack, const priority_t priority)
+    module_base_t<Derived, CmdType> *owner_ptr, const char *name,
+    const uint16_t init_stack, const uint16_t loop_stack, const priority_t priority)
     : task_base_t(name, init_stack, loop_stack, priority), _owner(owner_ptr)
 {
 }
