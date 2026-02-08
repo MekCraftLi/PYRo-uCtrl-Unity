@@ -1,13 +1,14 @@
 #ifndef CAN_DRV_H
 #define CAN_DRV_H
 
-#include "fdcan.h"
-#include "pyro_core_def.h"
 
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "fdcan.h"
+#include "Core/Def/pyro_core_def.h"
 #include <array>
 #include <cmsis_os.h>
-
-#include "map.h"
+#include "Core/ETL/map.h"
 
 namespace pyro
 {
@@ -41,7 +42,7 @@ class can_drv_t
     explicit can_drv_t(FDCAN_HandleTypeDef *hfdcan);
     ~can_drv_t();
 
-    status_t init();
+    can_drv_t& init();
     status_t start();
     status_t send_msg(uint32_t id, uint8_t *data);
     status_t register_rx_msg(can_msg_buffer_t *msg_buffer);

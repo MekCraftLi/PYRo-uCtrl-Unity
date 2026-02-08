@@ -71,7 +71,7 @@ can_drv_t::~can_drv_t(void)
     // vSemaphoreDelete(_registermtx);
 }
 
-pyro::status_t can_drv_t::init(void)
+can_drv_t& can_drv_t::init(void)
 {
     FDCAN_FilterTypeDef fdcan_filter;
     fdcan_filter.IdType       = FDCAN_STANDARD_ID;
@@ -81,19 +81,21 @@ pyro::status_t can_drv_t::init(void)
     fdcan_filter.FilterID1    = 0x00;
     fdcan_filter.FilterID2    = 0x00;
 
+    static can_drv_t err_obj(nullptr);
+
     if (HAL_OK != HAL_FDCAN_ConfigFilter(_hfdcan, &fdcan_filter))
-        return pyro::PYRO_ERROR;
+        return err_obj;
     if (HAL_OK !=
         HAL_FDCAN_ConfigGlobalFilter(_hfdcan, FDCAN_REJECT, FDCAN_REJECT,
                                      FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE))
-        return pyro::PYRO_ERROR;
+        return err_obj;
     if (HAL_OK != HAL_FDCAN_ConfigFifoWatermark(_hfdcan, FDCAN_CFG_RX_FIFO0, 1))
-        return pyro::PYRO_ERROR;
+        return err_obj;
     if (pyro::PYRO_OK !=
         pyro::can_hub_t::get_instance()->hub_register_can_obj(_hfdcan, this))
-        return pyro::PYRO_ERROR;
+        return err_obj;
 
-    return pyro::PYRO_OK;
+    return *this;
 }
 
 pyro::status_t can_drv_t::start(void)
@@ -113,7 +115,7 @@ pyro::status_t can_drv_t::send_msg(uint32_t id, uint8_t *data)
     tx_header.IdType              = FDCAN_STANDARD_ID;
     tx_header.Identifier          = id;
     tx_header.TxFrameType         = FDCAN_DATA_FRAME;
-    tx_header.DataLength          = 8;
+    tx_header.DataLength          = FDCAN_DLC_BYTES_8;
     tx_header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
     tx_header.BitRateSwitch       = FDCAN_BRS_OFF;
     tx_header.FDFormat            = FDCAN_CLASSIC_CAN;
