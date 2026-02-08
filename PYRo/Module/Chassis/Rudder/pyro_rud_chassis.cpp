@@ -22,7 +22,7 @@ float ctorque[4]{};
 //     return radps * 9.5492966f;
 // }
 
-rud_chassis_t::rud_chassis_t()
+rud_chassis_t::rud_chassis_t(int temp)
     : module_base_t("rudder", 512, 512, task_base_t::priority_t::HIGH)
 {
     _ctx.data  = {};
@@ -74,7 +74,7 @@ void rud_chassis_t::_init()
     _ctx.pid.rud_spd_pid[2] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
     _ctx.pid.rud_spd_pid[3] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
 
-    _ctx.pid.follow_yaw_pid = new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
+    _ctx.pid.follow_yaw_pid = new pid_t(3.5f, 0.01f, 0.01f, 0.1f, 5.0f);
 
     _ctx.config.rudder_pos_moving_offset[0] = 1.01472831f;
     _ctx.config.rudder_pos_moving_offset[1] = -0.29145637f;

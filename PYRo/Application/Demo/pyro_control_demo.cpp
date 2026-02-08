@@ -64,8 +64,7 @@ extern "C"
                 rud_cmd_obj.timestamp  = 0;
                 rud_cmd_obj.vx         = dr16_data.rc.ch_lx * 2.0f;
                 rud_cmd_obj.vy         = dr16_data.rc.ch_ly * 2.0f;
-                yaw_cmd_obj.target_yaw_imu_angle -=
-                    dr16_data.rc.ch_rx * 0.01f;
+                yaw_cmd_obj.target_yaw_imu_angle -= dr16_data.rc.ch_rx * 0.01f;
                 rud_cmd_obj.yaw_error =
                     pyro::yaw_t::instance()->get_yaw_error();
             }
@@ -87,8 +86,7 @@ extern "C"
                     dr16_data.rc.ch_lx *
                         sinf(pyro::yaw_t::instance()->get_yaw_error());
                 rud_cmd_obj.wz = 2.0f;
-                yaw_cmd_obj.target_yaw_imu_angle -=
-                    dr16_data.rc.ch_rx * 0.01f;
+                yaw_cmd_obj.target_yaw_imu_angle -= dr16_data.rc.ch_rx * 0.01f;
             }
 
             pyro::rud_chassis_t::instance()->set_command(rud_cmd_obj);

@@ -71,9 +71,9 @@ void yaw_t::_init()
     _ctx.motor.yaw->set_torque_range(-10, 10);
 
     _ctx.pid.yaw_pos_pid =
-        new pid_t(20.0f, 0.2f, 0.02f, 0.5f, 10.0f, 15, 150, 4);
+        new pid_t(15.0f, 0.1f, 0.02f, 0.5f, 8.0f, 15, 150, 4);
     _ctx.pid.yaw_spd_pid =
-        new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
+        new pid_t(0.2f, 0.002f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
 
     _ctx.config.yaw_offset = -2.40028524f;
 }

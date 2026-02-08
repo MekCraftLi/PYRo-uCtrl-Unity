@@ -20,7 +20,7 @@ struct rud_cmd_t : cmd_base_t
 {
     float vx, vy, wz, yaw_error;
     bool follow_yaw;
-    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0),follow_yaw(false)
+    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0), follow_yaw(false)
     {
     }
 };
@@ -42,7 +42,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
     rud_chassis_t &operator=(const rud_chassis_t &) = delete;
 
   private:
-    rud_chassis_t();
+    rud_chassis_t(int temp);
     ~rud_chassis_t() override = default;
 
     // --- 基类接口 ---
