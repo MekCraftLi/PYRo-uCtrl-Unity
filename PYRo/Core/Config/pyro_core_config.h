@@ -11,14 +11,14 @@
 #define CONTROLLER_DEMO_EN 0
 #define CONTROL_DEMO_EN 1
 #define IMU_DEMO_EN 0
-#define REFEREE_DEMO_EN 0
+#define REFEREE_DEMO_EN 1
 
 #endif
 
 #if DEBUG_MODE
 
 #define VOFA_DEBUG_EN 0
-#define JCOM_DEBUG_EN 0
+#define JCOM_DEBUG_EN 1
 
 #endif
 
@@ -38,7 +38,16 @@
 #define DARTS_ID 8
 #define RADAR_ID 9
 
-#define ROBOT_ID SENTRY_ID
+#define ROBOT_ID HERO_ID
+
+#if ROBOT_ID == HERO_ID
+
+#define GIMBAL_ID 1
+#define CHASSIS_ID 2
+
+#define BOARD_ID GIMBAL_ID
+#endif
+
 
 
 #endif //PYRO_PYRO_CORE_CONFIG_H

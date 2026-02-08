@@ -1,9 +1,12 @@
 #include "pyro_jcom.h"
-
 #include "pyro_core_dma_heap.h"
 #include "task.h"
-
 #include "cstring"
+#include "pyro_mec_chassis.h"
+#include "pyro_quad_booster.h"
+
+extern pyro::mec_chassis_t *mec_chassis_ptr;
+static pyro::quad_booster_t *quad_booster_ptr;
 
 namespace pyro
 {
@@ -25,7 +28,8 @@ jcom_drv_t::~jcom_drv_t()
 
 jcom_drv_t &jcom_drv_t::get_instance(uint8_t max_length)
 {
-    static jcom_drv_t instance(max_length, uart_drv_t::get_instance(uart_drv_t::uart1));
+    static jcom_drv_t instance(
+        max_length, uart_drv_t::get_instance(uart_drv_t::which_uart::uart10));
     return instance;
 }
 
@@ -72,8 +76,9 @@ void jcom_drv_t::remove_data(const float *data)
 
 void jcom_drv_t::update_data()
 {
-    static uint8_t frame_tail[4] = {0x00, 0x00, 0x80, 0x7F};
+    static uint8_t frame_head[4] = {0x00, 0x00, 0x80, 0x7F};
     uint8_t offset               = 0;
+    _data_pack[offset++]           = *reinterpret_cast<float *>(frame_head);
     for (const auto &[data, size] : _data_nodes)
     {
         for (uint8_t i = 0; i < size; ++i)
@@ -81,7 +86,6 @@ void jcom_drv_t::update_data()
             _data_pack[offset++] = data[i];
         }
     }
-    _data_pack[offset] = *reinterpret_cast<float *>(frame_tail);
 }
 
 void jcom_drv_t::send()
@@ -92,6 +96,11 @@ void jcom_drv_t::send()
 
 void jcom_drv_t::thread()
 {
+    quad_booster_ptr = quad_booster_t::instance();
+    add_data(&quad_booster_ptr->_ctx.data.target_trig_rad);
+    add_data(&quad_booster_ptr->_ctx.data.current_trig_rad);
+    add_data(&quad_booster_ptr->_ctx.data.target_trig_radps);
+    add_data(&quad_booster_ptr->_ctx.data.current_trig_radps);
     while (true)
     {
         update_data();
