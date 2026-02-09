@@ -138,7 +138,7 @@ void yaw_t::_fsm_execute()
     _main_fsm.execute(this);
 }
 
-status_t yaw_t::config(void *cfg_t)
+status_t yaw_t::config_impl(void *cfg_t)
 {
     CHECK_POINT_NULL(cfg_t);
     yaw_t::cfg_t *cfg_ptr = static_cast<yaw_t::cfg_t *>(cfg_t);

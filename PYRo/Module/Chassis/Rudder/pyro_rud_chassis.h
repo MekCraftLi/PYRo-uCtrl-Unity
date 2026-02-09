@@ -84,7 +84,13 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         powermeter_drv_t *power_meter{nullptr};
     };
 
-    status_t config(void *) override;
+    template <typename cfg_type> status_t config(cfg_type *cfg_t)
+    {
+        return config_template(cfg_t);
+    }
+
+  protected:
+    status_t config_impl(void *cfg_t) override;
 
   private:
     rud_chassis_t();

@@ -70,7 +70,13 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
         pid_cfg_t pid_cfg;
     };
 
-    status_t config(void *) override;
+    template <typename cfg_type> status_t config(cfg_type *cfg_t)
+    {
+        return config_template(cfg_t);
+    }
+
+  protected:
+    status_t config_impl(void *cfg_t) override;
 
   private:
     yaw_t();

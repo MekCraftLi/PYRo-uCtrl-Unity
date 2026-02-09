@@ -179,7 +179,7 @@ void rud_chassis_t::_fsm_execute()
     _main_fsm.execute(this);
 }
 
-status_t rud_chassis_t::config(void *cfg_t)
+status_t rud_chassis_t::config_impl(void *cfg_t)
 {
     CHECK_POINT_NULL(cfg_t);
     rud_chassis_t::cfg_t *cfg_ptr =

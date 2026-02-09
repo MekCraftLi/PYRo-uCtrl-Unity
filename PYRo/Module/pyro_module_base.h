@@ -53,10 +53,10 @@ struct cmd_base_t
 template <typename Derived, typename CmdType> class module_base_t
 {
   public:
-    static Derived *instance(void *cfg_t)
+    template <typename cfg_type> static Derived *instance(cfg_type *cfg_t)
     {
         static Derived _instance_obj; // NOLINT
-        if (PYRO_OK != _instance_obj.config(cfg_t))
+        if (PYRO_OK != _instance_obj.config_template(cfg_t))
             return nullptr;
         return &_instance_obj;
     }
@@ -73,9 +73,14 @@ template <typename Derived, typename CmdType> class module_base_t
     bool set_command(const CmdType &cmd);
     [[nodiscard]] mutex_t &get_mutex();
 
-    virtual status_t config(void *) = 0;
-
   protected:
+    virtual status_t config_impl(void *cfg_t) = 0;
+
+    template <typename cfg_type> status_t config_template(cfg_type *cfg_t)
+    {
+        return config_impl(static_cast<void *>(cfg_t));
+    }
+
     explicit module_base_t(
         const char *name = "module_task", uint16_t init_stack = 512,
         uint16_t loop_stack              = 256,
