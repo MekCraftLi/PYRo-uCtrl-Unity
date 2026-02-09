@@ -4,6 +4,8 @@
 #define POWER_CONTROL_USE 0
 
 #include "pyro_algo_pid.h"
+#include "pyro_algo_common.h"
+#include "pyro_core_def.h"
 #include "pyro_module_base.h"
 #include "pyro_dji_motor_drv.h"
 #include "pyro_dm_motor_drv.h"
@@ -41,8 +43,51 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
     rud_chassis_t(const rud_chassis_t &)            = delete;
     rud_chassis_t &operator=(const rud_chassis_t &) = delete;
 
+    struct motor_cfg_t
+    {
+        dji_motor_tx_frame_t::register_id_t rudder_id;
+        can_hub_t::which_can rudder_can;
+        dji_motor_tx_frame_t::register_id_t wheel_id;
+        can_hub_t::which_can wheel_can;
+    };
+
+    struct offset_cfg_t
+    {
+        float rudder_pos_moving_offset[4];
+    };
+
+    struct pid_cfg_t
+    {
+        pid_t *rud_pos_pid[4]{nullptr};
+        pid_t *rud_spd_pid[4]{nullptr};
+        pid_t *wheel_pid[4]{nullptr};
+        pid_t *follow_yaw_pid{nullptr};
+    };
+
+    struct power_ctx_t
+    {
+        powermeter_data *data{nullptr};
+    };
+
+
+    struct cfg_t
+    {
+        float wheelbase{};   // the distance between the front and back wheels
+        float track_width{}; // the distance between the left and right wheels
+        float wheel_radius{};
+        float gear_ratio{};
+        uint8_t powercontrol_num{};
+        uint8_t power_limit{};
+        motor_cfg_t motor_cfg[4]{}; //
+        pid_cfg_t pid_cfg;
+        offset_cfg_t rud_offset{}; //
+        powermeter_drv_t *power_meter{nullptr};
+    };
+
+    status_t config(void *) override;
+
   private:
-    rud_chassis_t(int temp);
+    rud_chassis_t();
     ~rud_chassis_t() override = default;
 
     // --- 基类接口 ---
@@ -72,10 +117,9 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         pid_t *follow_yaw_pid{nullptr};
     };
 
-    struct config_ctx_t
+    struct hardware_ctx_t
     {
-        float rudder_pos_moving_offset[4]{};
-        float rudder_pos_braking_offset[4]{};
+        powermeter_drv_t *power_meter{nullptr};
     };
 
     struct data_ctx_t
@@ -83,20 +127,10 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
         rudder_kin_t::rudder_states_t current_states{};
         rudder_kin_t::rudder_states_t target_states{};
 
-        float current_rud_radps[4];
+        float current_rud_radps[4]{};
 
         float out_rud_torque[4]{};
         float out_wheel_torque[4]{};
-    };
-
-    struct hardware_ctx_t
-    {
-        powermeter_drv_t *power_meter{nullptr};
-    };
-
-    struct power_ctx_t
-    {
-        powermeter_data *data{nullptr};
     };
 
     enum class drive_mode_t
@@ -108,13 +142,19 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 
     struct rud_ctx_t
     {
+        float wheelbase{};
+        float track_width{};
+        float wheel_radius{};
+        float gear_ratio{};
+        float rudder_pos_moving_offset[4]{};
+        uint8_t powercontrol_num{};
+        uint8_t power_limit{};
         motor_ctx_t motor;
         pid_ctx_t pid;
         hardware_ctx_t hardware;
         power_ctx_t power;
         data_ctx_t data;
-        config_ctx_t config;
-        rud_cmd_t *cmd;
+        rud_cmd_t *cmd{};
         drive_mode_t drive_mode;
     };
 

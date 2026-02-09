@@ -22,7 +22,7 @@ float ctorque[4]{};
 //     return radps * 9.5492966f;
 // }
 
-rud_chassis_t::rud_chassis_t(int temp)
+rud_chassis_t::rud_chassis_t()
     : module_base_t("rudder", 512, 512, task_base_t::priority_t::HIGH)
 {
     _ctx.data  = {};
@@ -31,87 +31,7 @@ rud_chassis_t::rud_chassis_t(int temp)
 
 void rud_chassis_t::_init()
 {
-    _kinematics = new rudder_kin_t(0.36f, 0.36f);
-
-    _ctx.motor.rudder[0] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_1,
-                                    can_hub_t::can2); // FL Rudder
-    _ctx.motor.rudder[1] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_2,
-                                    can_hub_t::can2); // BL Rudder
-    _ctx.motor.rudder[2] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_3,
-                                    can_hub_t::can1); // BR Rudder
-    _ctx.motor.rudder[3] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_4,
-                                    can_hub_t::can1); // FR Rudder
-
-    _ctx.motor.wheel[0] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_1,
-                                  can_hub_t::can2); // FL Wheel
-    _ctx.motor.wheel[1] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_2,
-                                  can_hub_t::can2); // BL Wheel
-    _ctx.motor.wheel[2] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_3,
-                                  can_hub_t::can1); // BR Wheel
-    _ctx.motor.wheel[3] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4,
-                                  can_hub_t::can1); // FR Wheel
-
-    _ctx.pid.wheel_pid[0]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[1]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[2]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[3]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-
-    _ctx.pid.rud_pos_pid[0] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[1] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[2] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[3] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-
-    _ctx.pid.rud_spd_pid[0] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[1] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[2] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[3] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-
-    _ctx.pid.follow_yaw_pid = new pid_t(3.5f, 0.01f, 0.01f, 0.1f, 5.0f);
-
-    _ctx.config.rudder_pos_moving_offset[0] = 1.01472831f;
-    _ctx.config.rudder_pos_moving_offset[1] = -0.29145637f;
-    _ctx.config.rudder_pos_moving_offset[2] = -1.87299052f;
-    _ctx.config.rudder_pos_moving_offset[3] = -1.04003897f;
-
-    power_control_drv_t &power_controller = power_control_drv_t::get_instance();
-    power_control_drv_t::motor_coefficient_t coef1;
-    coef1.k1 = 0;
-    coef1.k2 = 0;
-    coef1.k3 = 0;
-    coef1.k4 = 0;
-    power_controller.set_motor_coefficient(1, coef1);
-
-    power_control_drv_t::motor_coefficient_t coef2;
-    coef2.k1 = 0;
-    coef2.k2 = 0;
-    coef2.k3 = 0;
-    coef2.k4 = 0;
-    power_controller.set_motor_coefficient(2, coef2);
-
-    power_control_drv_t::motor_coefficient_t coef3;
-    coef3.k1 = 0;
-    coef3.k2 = 0;
-    coef3.k3 = 0;
-    coef3.k4 = 0;
-    power_controller.set_motor_coefficient(3, coef3);
-
-    power_control_drv_t::motor_coefficient_t coef4;
-    coef4.k1 = 0;
-    coef4.k2 = 0;
-    coef4.k3 = 0;
-    coef4.k4 = 0;
-    power_controller.set_motor_coefficient(4, coef4);
-
-    _ctx.hardware.power_meter = new powermeter_drv_t(0x212, can_hub_t::can2);
-    _ctx.power.data           = new powermeter_data();
+    _kinematics = new rudder_kin_t(_ctx.wheelbase, _ctx.track_width);
 }
 
 void rud_chassis_t::_update_feedback()
@@ -129,16 +49,16 @@ void rud_chassis_t::_update_feedback()
     // 舵机当前角度（-PI ~ PI）
     _ctx.data.current_states.modules[rudder_kin_t::FL].angle =
         _ctx.motor.rudder[0]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[0];
+        _ctx.rudder_pos_moving_offset[0];
     _ctx.data.current_states.modules[rudder_kin_t::FR].angle =
         _ctx.motor.rudder[1]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[1];
+        _ctx.rudder_pos_moving_offset[1];
     _ctx.data.current_states.modules[rudder_kin_t::BL].angle =
         _ctx.motor.rudder[2]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[2];
+        _ctx.rudder_pos_moving_offset[2];
     _ctx.data.current_states.modules[rudder_kin_t::BR].angle =
         _ctx.motor.rudder[3]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[3];
+        _ctx.rudder_pos_moving_offset[3];
     for (int i = 0; i < 4; i++)
     {
         if (_ctx.data.current_states.modules[i].angle > PI)
@@ -249,14 +169,44 @@ void rud_chassis_t::_send_motor_command(rud_ctx_t *ctx)
 
 void rud_chassis_t::_fsm_execute()
 {
-    _ctx.cmd = &_cmd[_read_index];
+    _ctx.cmd = &_current_cmd;
 
-    if (cmd_base_t::mode_t::ZERO_FORCE == _ctx.cmd->mode)
+    if (cmd_base_t::mode_t::PASSIVE == _ctx.cmd->mode)
         _main_fsm.change_state(&_state_passive);
     else if (cmd_base_t::mode_t::ACTIVE == _ctx.cmd->mode)
         _main_fsm.change_state(&_state_active);
 
     _main_fsm.execute(this);
 }
+
+status_t rud_chassis_t::config(void *cfg_t)
+{
+    CHECK_POINT_NULL(cfg_t);
+    rud_chassis_t::cfg_t *cfg_ptr =
+        static_cast<pyro::rud_chassis_t::cfg_t *>(cfg_t);
+    _ctx.wheelbase        = cfg_ptr->wheelbase;
+    _ctx.track_width      = cfg_ptr->track_width;
+    _ctx.wheel_radius     = cfg_ptr->wheel_radius;
+    _ctx.gear_ratio       = cfg_ptr->gear_ratio;
+    _ctx.powercontrol_num = cfg_ptr->powercontrol_num;
+    _ctx.power_limit      = cfg_ptr->power_limit;
+    for (int i = 0; i < 4; i++)
+    {
+        _ctx.motor.rudder[i] = new dji_gm_6020_motor_drv_t(
+            cfg_ptr->motor_cfg[i].rudder_id, cfg_ptr->motor_cfg[i].rudder_can);
+        _ctx.motor.wheel[i] = new dji_m3508_motor_drv_t(
+            cfg_ptr->motor_cfg[i].wheel_id, cfg_ptr->motor_cfg[i].wheel_can);
+        _ctx.pid.rud_pos_pid[i] = cfg_ptr->pid_cfg.rud_pos_pid[i];
+        _ctx.pid.rud_spd_pid[i] = cfg_ptr->pid_cfg.rud_spd_pid[i];
+        _ctx.pid.wheel_pid[i]   = cfg_ptr->pid_cfg.wheel_pid[i];
+        _ctx.rudder_pos_moving_offset[i] =
+            cfg_ptr->rud_offset.rudder_pos_moving_offset[i];
+    }
+    _ctx.pid.follow_yaw_pid   = cfg_ptr->pid_cfg.follow_yaw_pid;
+    _ctx.hardware.power_meter = cfg_ptr->power_meter;
+
+    return PYRO_OK;
+}
+
 
 } // namespace pyro

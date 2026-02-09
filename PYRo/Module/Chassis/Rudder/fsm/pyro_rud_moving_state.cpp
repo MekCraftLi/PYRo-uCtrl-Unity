@@ -6,28 +6,22 @@
 
 namespace pyro
 {
-
-float calculate_angle_diff(float current, float target)
-{
-    const float diff = fabs(current - target);
-    return fmin(diff, 2 * M_PI - diff);
-}
-
 float last_angle[4]{};
-bool is_stick_zeroed        = false;
+bool is_stick_zeroed       = false;
 // bool are_all_servos_reached = false;
-bool are_all_wheel_stopped  = false;
+bool are_all_wheel_stopped = false;
 
 void rud_chassis_t::fsm_active_t::state_moving_t::enter(rud_chassis_t *owner)
 {
-    is_stick_zeroed        = false;
+    is_stick_zeroed       = false;
     // are_all_servos_reached = false;
-    are_all_wheel_stopped  = false;
+    are_all_wheel_stopped = false;
 }
 
 void rud_chassis_t::fsm_active_t::state_moving_t::execute(rud_chassis_t *owner)
 {
-    bool stick_is_zero = (owner->_cmd->vx == 0 && owner->_cmd->vy == 0);
+    bool stick_is_zero =
+        (owner->_current_cmd.vx == 0 && owner->_current_cmd.vy == 0);
 
     // 判断电机速度
     for (int i = 0; i < 4; i++)

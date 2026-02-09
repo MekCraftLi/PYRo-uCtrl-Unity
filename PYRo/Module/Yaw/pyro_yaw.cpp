@@ -65,17 +65,17 @@ float yaw_t::get_yaw_error() const
 
 void yaw_t::_init()
 {
-    _ctx.motor.yaw = new dm_motor_drv_t(0x01, 0x02, pyro::can_hub_t::can2);
-    _ctx.motor.yaw->set_position_range(-PI, PI);
-    _ctx.motor.yaw->set_rotate_range(-20, 20);
-    _ctx.motor.yaw->set_torque_range(-10, 10);
-
-    _ctx.pid.yaw_pos_pid =
-        new pid_t(15.0f, 0.1f, 0.02f, 0.5f, 8.0f, 15, 150, 4);
-    _ctx.pid.yaw_spd_pid =
-        new pid_t(0.2f, 0.002f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
-
-    _ctx.config.yaw_offset = -2.40028524f;
+    // _ctx.motor.yaw = new dm_motor_drv_t(0x01, 0x02, pyro::can_hub_t::can2);
+    // _ctx.motor.yaw->set_position_range(-PI, PI);
+    // _ctx.motor.yaw->set_rotate_range(-20, 20);
+    // _ctx.motor.yaw->set_torque_range(-10, 10);
+    //
+    // _ctx.pid.yaw_pos_pid =
+    //     new pid_t(15.0f, 0.1f, 0.02f, 0.5f, 8.0f, 15, 150, 4);
+    // _ctx.pid.yaw_spd_pid =
+    //     new pid_t(0.2f, 0.002f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
+    //
+    // _ctx.config.yaw_offset = -2.40028524f;
 }
 
 void yaw_t::_update_feedback()
@@ -128,14 +128,34 @@ void yaw_t::_send_motor_command(yaw_ctx_t *ctx)
 
 void yaw_t::_fsm_execute()
 {
-    _ctx.cmd = &_cmd[_read_index];
+    _ctx.cmd = &_current_cmd;
 
-    if (cmd_base_t::mode_t::ZERO_FORCE == _ctx.cmd->mode)
+    if (cmd_base_t::mode_t::PASSIVE == _ctx.cmd->mode)
         _main_fsm.change_state(&_state_passive);
     else if (cmd_base_t::mode_t::ACTIVE == _ctx.cmd->mode)
         _main_fsm.change_state(&_state_active);
 
     _main_fsm.execute(this);
+}
+
+status_t yaw_t::config(void *cfg_t)
+{
+    CHECK_POINT_NULL(cfg_t);
+    yaw_t::cfg_t *cfg_ptr = static_cast<yaw_t::cfg_t *>(cfg_t);
+    _ctx.motor.yaw        = new dm_motor_drv_t(cfg_ptr->motor_cfg.can_id,
+                                               cfg_ptr->motor_cfg.master_id,
+                                               cfg_ptr->motor_cfg.yaw_can);
+    _ctx.motor.yaw->set_position_range(cfg_ptr->motor_cfg.min_pos_range,
+                                       cfg_ptr->motor_cfg.max_pos_range);
+    _ctx.motor.yaw->set_rotate_range(cfg_ptr->motor_cfg.min_rotate_range,
+                                     cfg_ptr->motor_cfg.max_rotate_range);
+    _ctx.motor.yaw->set_torque_range(cfg_ptr->motor_cfg.min_torque_range,
+                                     cfg_ptr->motor_cfg.max_torque_range);
+    _ctx.pid.yaw_pos_pid   = cfg_ptr->pid_cfg.yaw_pos_pid;
+    _ctx.pid.yaw_spd_pid   = cfg_ptr->pid_cfg.yaw_spd_pid;
+    _ctx.config.yaw_offset = cfg_ptr->offset_cfg.yaw_offset;
+    //
+    return PYRO_OK;
 }
 
 } // namespace pyro

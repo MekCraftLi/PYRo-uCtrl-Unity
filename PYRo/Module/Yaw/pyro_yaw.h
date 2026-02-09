@@ -39,6 +39,39 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
 
     float get_yaw_error() const;
 
+    struct motor_cfg_t
+    {
+        uint32_t can_id;
+        uint32_t master_id;
+        can_hub_t::which_can yaw_can;
+        float min_pos_range;
+        float max_pos_range;
+        float min_rotate_range;
+        float max_rotate_range;
+        float min_torque_range;
+        float max_torque_range;
+    };
+
+    struct offset_cfg_t
+    {
+        float yaw_offset;
+    };
+
+    struct pid_cfg_t
+    {
+        pid_t *yaw_pos_pid;
+        pid_t *yaw_spd_pid;
+    };
+
+    struct cfg_t
+    {
+        motor_cfg_t motor_cfg;
+        offset_cfg_t offset_cfg;
+        pid_cfg_t pid_cfg;
+    };
+
+    status_t config(void *) override;
+
   private:
     yaw_t();
     ~yaw_t() override = default;
@@ -47,6 +80,7 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
     void _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
+
 
     // --- 派生方法 ---
     static void _yaw_control(yaw_ctx_t *ctx);

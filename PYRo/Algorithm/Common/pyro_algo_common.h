@@ -1,5 +1,5 @@
-#ifndef PYRO_COMMON_H
-#define PYRO_COMMON_H
+#ifndef PYRO_ALGO_COMMON_H
+#define PYRO_ALGO_COMMON_H
 
 #include "pyro_core_def.h"
 #include "math.h"
@@ -11,5 +11,7 @@ float wrap2pi_f32(float input);
 
 float radps_to_rpm(float radps);
 
-}
+
+float calculate_angle_diff(float current, float target);
+} // namespace pyro
 #endif
