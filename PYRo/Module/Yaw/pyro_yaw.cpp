@@ -65,27 +65,19 @@ float yaw_t::get_yaw_error() const
 
 void yaw_t::_init()
 {
-    _ctx.motor.yaw = new dm_motor_drv_t(0x01, 0x02, pyro::can_hub_t::can2);
-    _ctx.motor.yaw->set_position_range(-PI, PI);
-    _ctx.motor.yaw->set_rotate_range(-20, 20);
-    _ctx.motor.yaw->set_torque_range(-10, 10);
-
-    _ctx.pid.yaw_pos_pid =
-        new pid_t(20.0f, 0.2f, 0.02f, 0.5f, 10.0f, 15, 150, 4);
-    _ctx.pid.yaw_spd_pid =
-        new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
-
+    _ctx.yaw_config        = _config;
     _ctx.config.yaw_offset = -2.40028524f;
 }
 
 void yaw_t::_update_feedback()
 {
     ins_drv_t *ins = ins_drv_t::get_instance();
-    _ctx.motor.yaw->update_feedback();
+    _ctx.yaw_config.motor.yaw->update_feedback();
 
     // yaw轴当前角度（电机角度， -PI ~ PI）
-    _ctx.data.current_yaw_angle = wrap_pi(
-        _ctx.motor.yaw->get_current_position() - _ctx.config.yaw_offset);
+    _ctx.data.current_yaw_angle =
+        wrap_pi(_ctx.yaw_config.motor.yaw->get_current_position() -
+                _ctx.config.yaw_offset);
     cyaw = _ctx.data.current_yaw_angle;
 
     // 这里需要获取底盘imu数据减去大yaw的机械角度得到yaw轴的imu角度
@@ -100,7 +92,8 @@ void yaw_t::_update_feedback()
         wrap_pi(yaw - _ctx.data.current_yaw_angle);
 
     // yaw电机当前角速度
-    _ctx.data.current_yaw_radps = _ctx.motor.yaw->get_current_rotate();
+    _ctx.data.current_yaw_radps =
+        _ctx.yaw_config.motor.yaw->get_current_rotate();
 }
 
 void yaw_t::_yaw_control(yaw_ctx_t *ctx)
@@ -115,15 +108,16 @@ void yaw_t::_yaw_control(yaw_ctx_t *ctx)
         calculate_yaw_error(ctx->data.target_yaw_imu_angle,
                             ctx->data.gimbal_world_yaw, yaw_rotation_loops);
 
-    float yaw_pos_output = ctx->pid.yaw_pos_pid->calculate(0, world_yaw_error);
+    float yaw_pos_output =
+        ctx->yaw_config.pid.yaw_pos_pid->calculate(0, world_yaw_error);
 
-    ctx->data.out_yaw_torque = ctx->pid.yaw_spd_pid->calculate(
+    ctx->data.out_yaw_torque = ctx->yaw_config.pid.yaw_spd_pid->calculate(
         yaw_pos_output, ctx->data.current_yaw_radps);
 }
 
 void yaw_t::_send_motor_command(yaw_ctx_t *ctx)
 {
-    ctx->motor.yaw->send_torque(ctx->data.out_yaw_torque);
+    ctx->yaw_config.motor.yaw->send_torque(ctx->data.out_yaw_torque);
 }
 
 void yaw_t::_fsm_execute()

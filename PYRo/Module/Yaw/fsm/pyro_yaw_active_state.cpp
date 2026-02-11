@@ -7,7 +7,7 @@ namespace pyro
 {
 void yaw_t::state_active_t::enter(owner *owner)
 {
-    owner->_ctx.motor.yaw->enable();
+    owner->_ctx.yaw_config.motor.yaw->enable();
 }
 
 void yaw_t::state_active_t::execute(owner *owner)

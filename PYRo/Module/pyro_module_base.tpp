@@ -19,23 +19,30 @@
 namespace pyro
 {
 
-template <typename Derived, typename CmdType>
-module_base_t<Derived, CmdType>::module_base_t(const char *name,
-                                               uint16_t init_stack,
-                                               uint16_t loop_stack,
-                                               task_base_t::priority_t priority)
+template <typename Derived, typename CmdType, typename ConfigData>
+module_base_t<Derived, CmdType, ConfigData>::module_base_t(
+    const char *name, uint16_t init_stack, uint16_t loop_stack,
+    task_base_t::priority_t priority)
     : _task(this, name, init_stack, loop_stack, priority)
 {
 }
 
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::start()
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::configure(
+    const ConfigData &config)
+{
+    _config = config;
+}
+
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::start()
 {
     _task.start();
 }
 
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::set_command(const CmdType &cmd)
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::set_command(
+    const CmdType &cmd)
 {
     scoped_mutex_t lock(_mutex);
     _cmd[1 - _read_index] = cmd;
@@ -46,8 +53,8 @@ void module_base_t<Derived, CmdType>::set_command(const CmdType &cmd)
  * @brief Updates command from double buffer.
  * 从双缓冲中更新命令。
  */
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::_update_command()
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::_update_command()
 {
     if (_cmd_updated)
     {
@@ -57,8 +64,8 @@ void module_base_t<Derived, CmdType>::_update_command()
     }
 }
 
-template <typename Derived, typename CmdType>
-mutex_t &module_base_t<Derived, CmdType>::get_mutex()
+template <typename Derived, typename CmdType, typename ConfigData>
+mutex_t &module_base_t<Derived, CmdType, ConfigData>::get_mutex()
 {
     return _mutex;
 }
@@ -67,8 +74,8 @@ mutex_t &module_base_t<Derived, CmdType>::get_mutex()
  * @brief Core loop invoking virtual callbacks.
  * 调用虚函数回调的核心循环。
  */
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::_run_loop_impl()
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::_run_loop_impl()
 {
     TickType_t xLastWakeTime        = xTaskGetTickCount();
     constexpr TickType_t xFrequency = pdMS_TO_TICKS(1);
@@ -84,8 +91,8 @@ void module_base_t<Derived, CmdType>::_run_loop_impl()
 
 /* Internal Task Proxy Implementations --------------------------------------*/
 
-template <typename Derived, typename CmdType>
-module_base_t<Derived, CmdType>::module_task_t::module_task_t(
+template <typename Derived, typename CmdType, typename ConfigData>
+module_base_t<Derived, CmdType, ConfigData>::module_task_t::module_task_t(
     module_base_t *owner_ptr, const char *name, const uint16_t init_stack,
     const uint16_t loop_stack, const priority_t priority)
     : task_base_t(name, init_stack, loop_stack, priority), _owner(owner_ptr)
@@ -96,8 +103,8 @@ module_base_t<Derived, CmdType>::module_task_t::module_task_t(
  * @brief Invokes the initialization function of the module instance.
  * 调用模块实例的初始化函数。
  */
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::module_task_t::init()
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::module_task_t::init()
 {
     if (_owner)
         _owner->_init();
@@ -107,8 +114,8 @@ void module_base_t<Derived, CmdType>::module_task_t::init()
  * @brief Invokes the core loop implementation of the module instance.
  * 调用模块实例的核心循环实现。
  */
-template <typename Derived, typename CmdType>
-void module_base_t<Derived, CmdType>::module_task_t::run_loop()
+template <typename Derived, typename CmdType, typename ConfigData>
+void module_base_t<Derived, CmdType, ConfigData>::module_task_t::run_loop()
 {
     if (_owner)
         _owner->_run_loop_impl();
