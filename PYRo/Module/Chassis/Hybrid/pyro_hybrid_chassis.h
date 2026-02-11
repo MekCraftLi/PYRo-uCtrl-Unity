@@ -29,11 +29,15 @@ struct hybrid_cmd_t : cmd_base_t
     }
 };
 
+struct hybrid_cfg_t
+{
+};
+
 // =========================================================
 // 2. 混合底盘类
 // =========================================================
 class hybrid_chassis_t final
-    : public module_base_t<hybrid_chassis_t, hybrid_cmd_t>
+    : public module_base_t<hybrid_chassis_t, hybrid_cmd_t, hybrid_cfg_t>
 {
 
     // 前向声明

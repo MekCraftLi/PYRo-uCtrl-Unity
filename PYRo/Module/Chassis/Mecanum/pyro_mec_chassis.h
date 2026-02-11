@@ -25,12 +25,16 @@ struct mec_cmd_t final : public cmd_base_t
     }
 };
 
+struct mec_cfg_t
+{
+};
+
 // =========================================================
 // 2. 麦轮底盘类
 // =========================================================
-class mec_chassis_t final : public module_base_t<mec_chassis_t, mec_cmd_t>
+class mec_chassis_t final : public module_base_t<mec_chassis_t, mec_cmd_t,mec_cfg_t>
 {
-    friend class module_base_t<mec_chassis_t, mec_cmd_t>;
+    friend class module_base_t<mec_chassis_t, mec_cmd_t,mec_cfg_t>;
     friend class jcom_drv_t;
 
     struct motor_ctx_t;
