@@ -1,13 +1,15 @@
 /*
  * @Author: Vod vod0575@outlook
  * @Date: 2026-02-06 19:32:10
- * @LastEditors: Vod vod0575@outlook
- * @LastEditTime: 2026-02-06 22:09:11
+ * @LastEditors: vod vod_x@outlook.com
+ * @LastEditTime: 2026-02-07 22:35:40
  * @Description: 
  * The kinematic solve algorithm for wheel legged robot. If you want to use,
  * define a variable which type is wheel_legged_kin_t, than call its init 
  * function. After init, you can call solve function and vmc function to 
- * solve physical angles and do force mapping 
+ * solve physical angles and do force mapping. This file uses the arm math
+ * library to accelerate trigonometric calculation, so you need to add arm math
+ * library to your project and enable it in your build system.
  * 
  * Copyright (c) 2026 by PeiYangRobot, All Rights Reserved. 
  */
@@ -71,7 +73,25 @@ public:
        float k0;
        float k1;
     };
-    
+
+    /**
+     * @description:    
+       Initialize the kinematic solver with given cofficients.
+     * @param {phi_k_t*} phi_k
+       The cofficients for phi solve.
+     * @param {polar_k_t*} polar_k
+       The cofficients for polar coordinates solve.
+     * @param {vmc_k_t*} vmc_k
+       The cofficients for VMC transform matrix.
+     * @return {*}
+       PYRO_OK: OK.
+       PYRO_PARAM_ERROR: The point of parameter is null.
+       PYRO_ALREADY_INIT: The solver is already initialized.
+     */
+    status_t init( const phi_k_t* phi_k,
+                   const polar_k_t* polar_k,
+                   const vmc_k_t* vmc_k);
+        
     /**
      * @description:  
        Solve polar coordinations of the end point and angles between litte rod 
@@ -101,12 +121,13 @@ public:
     status_t solve(float theta1, float theta2, 
                    float *phi1,  float *phi2, 
                    float *length, float *alpha);
+
     
     /**
      * @description: 
        Return VMC transform matrix value.
      * @param {float} theta1
-     * Angle between j2-j3 and direction of movement, counter clockwise is 
+       Angle between j2-j3 and direction of movement, counter clockwise is 
        positive(rad). 
      * @param {float} theta2  
        Angle between j1-j5 and direction of movement, counter clockwise if 
@@ -121,6 +142,8 @@ public:
        Polar radius of j9(m).
      * @param {float} alpha
        Polar angle of j9(rad).
+    *  @param {float*} T_val
+       Pointer to an array which stores the VMC transform matrix value. 
      * @return {*}
        PYRO_OK: OK
        PYRO_NOT_FOUND: Call this function before init.
@@ -128,13 +151,21 @@ public:
      */
     status_t get_VMC_value(float theta1, float theta2,
                            float phi1, float phi2, 
-                           float length, float alpha);
+                           float length, float alpha,
+                           float *T_val);
    
 private: 
+    /* Flag to check whether the solver is initialized, 0 for not initialized,
+        1 for initialized.*/
+    uint8_t _is_inited{0};
+    
+    /* The cofficients for phi solve */
+    phi_k_t _phi_k;
+    /* The cofficients for polar coordinates solve */
+    polar_k_t _polar_k;
+    /* The cofficients for VMC transform matrix */
+    vmc_k_t _vmc_k;
 
-   uint8_t _init_flag;
-   
-
-}
+};
 }
 #endif
