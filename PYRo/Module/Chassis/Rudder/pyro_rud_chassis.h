@@ -20,13 +20,35 @@ struct rud_cmd_t : cmd_base_t
 {
     float vx, vy, wz, yaw_error;
     bool follow_yaw;
-    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0),follow_yaw(false)
+    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0), follow_yaw(false)
     {
     }
 };
 
+struct rud_cfg_t
+{
+    // 电机句柄
+    struct motor_cfg_t
+    {
+        motor_base_t *rudder[4]{nullptr};
+        motor_base_t *wheel[4]{nullptr};
+    };
+
+    struct pid_cfg_t
+    {
+        pid_t *rud_pos_pid[4]{nullptr};
+        pid_t *rud_spd_pid[4]{nullptr};
+        pid_t *wheel_pid[4]{nullptr};
+        pid_t *follow_yaw_pid{nullptr};
+    };
+
+    motor_cfg_t motor;
+    pid_cfg_t pid;
+};
+
 // 继承模板基类，传入具体的命令类型
-class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
+class rud_chassis_t final
+    : public module_base_t<rud_chassis_t, rud_cmd_t, rud_cfg_t>
 {
     friend class module_base_t;
     friend class chassis_base_t;
@@ -57,20 +79,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 
     rudder_kin_t *_kinematics{nullptr};
 
-    // 电机句柄
-    struct motor_ctx_t
-    {
-        motor_base_t *rudder[4]{nullptr};
-        motor_base_t *wheel[4]{nullptr};
-    };
 
-    struct pid_ctx_t
-    {
-        pid_t *rud_pos_pid[4]{nullptr};
-        pid_t *rud_spd_pid[4]{nullptr};
-        pid_t *wheel_pid[4]{nullptr};
-        pid_t *follow_yaw_pid{nullptr};
-    };
 
     struct config_ctx_t
     {
@@ -108,8 +117,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
 
     struct rud_ctx_t
     {
-        motor_ctx_t motor;
-        pid_ctx_t pid;
+        rud_cfg_t rud_config;
         hardware_ctx_t hardware;
         power_ctx_t power;
         data_ctx_t data;
@@ -177,6 +185,7 @@ class rud_chassis_t final : public module_base_t<rud_chassis_t, rud_cmd_t>
     static constexpr uint8_t POWERCONTROL_NUM = 4;
     static constexpr uint8_t POWER_LIMIT      = 80;
 };
+
 
 } // namespace pyro
 #endif

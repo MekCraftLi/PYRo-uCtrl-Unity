@@ -22,8 +22,24 @@ struct yaw_cmd_t : cmd_base_t
     {
     }
 };
+struct yaw_cfg_t
+{
+    struct motor_cfg_t
+    {
+        dm_motor_drv_t *yaw{nullptr};
+    };
 
-class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
+    struct pid_cfg_t
+    {
+        pid_t *yaw_pos_pid{nullptr};
+        pid_t *yaw_spd_pid{nullptr};
+    };
+
+    motor_cfg_t motor;
+    pid_cfg_t pid;
+};
+
+class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t, yaw_cfg_t>
 {
     friend class module_base_t;
     friend class vofa_drv_t;
@@ -54,16 +70,7 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
 
 
     // 电机句柄
-    struct motor_ctx_t
-    {
-        dm_motor_drv_t *yaw{nullptr};
-    };
 
-    struct pid_ctx_t
-    {
-        pid_t *yaw_pos_pid{nullptr};
-        pid_t *yaw_spd_pid{nullptr};
-    };
 
     struct config_ctx_t
     {
@@ -83,11 +90,10 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
 
     struct yaw_ctx_t
     {
-        motor_ctx_t motor;
-        pid_ctx_t pid;
-        data_ctx_t data;
+        yaw_cfg_t yaw_config;
+        data_ctx_t data{};
         config_ctx_t config;
-        yaw_cmd_t *cmd;
+        yaw_cmd_t *cmd{};
     };
 
     struct debug_ctx_t

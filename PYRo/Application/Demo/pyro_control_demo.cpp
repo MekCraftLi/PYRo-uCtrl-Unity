@@ -8,9 +8,12 @@
 #include "pyro_rw_lock.h"
 #include "stm32h723xx.h"
 #include "Yaw/pyro_yaw.h"
+#include "pyro_dji_motor_drv.h"
 
 #ifdef __cplusplus
-
+using namespace pyro;
+rud_cfg_t rud_config{};
+yaw_cfg_t yaw_config{};
 extern "C"
 {
     void pyro_control_demo(void *arg)
@@ -19,6 +22,76 @@ extern "C"
         pyro::yaw_cmd_t yaw_cmd_obj{};
         pyro::dr16_drv_t::dr16_ctrl_t dr16_data;
 
+
+        rud_config.motor.rudder[0] =
+            new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_1,
+                                        can_hub_t::can2); // FL Rudder
+        rud_config.motor.rudder[1] =
+            new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_2,
+                                        can_hub_t::can2); // BL Rudder
+        rud_config.motor.rudder[2] =
+            new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_3,
+                                        can_hub_t::can1); // BR Rudder
+        rud_config.motor.rudder[3] =
+            new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_4,
+                                        can_hub_t::can1); // FR Rudder
+
+        rud_config.motor.wheel[0] =
+            new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_1,
+                                      can_hub_t::can2); // FL Wheel
+        rud_config.motor.wheel[1] =
+            new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_2,
+                                      can_hub_t::can2); // BL Wheel
+        rud_config.motor.wheel[2] =
+            new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_3,
+                                      can_hub_t::can1); // BR Wheel
+        rud_config.motor.wheel[3] =
+            new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4,
+                                      can_hub_t::can1); // FR Wheel
+
+        rud_config.pid.wheel_pid[0] =
+            new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+        rud_config.pid.wheel_pid[1] =
+            new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+        rud_config.pid.wheel_pid[2] =
+            new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+        rud_config.pid.wheel_pid[3] =
+            new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
+
+        rud_config.pid.rud_pos_pid[0] =
+            new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
+        rud_config.pid.rud_pos_pid[1] =
+            new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
+        rud_config.pid.rud_pos_pid[2] =
+            new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
+        rud_config.pid.rud_pos_pid[3] =
+            new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
+
+        rud_config.pid.rud_spd_pid[0] =
+            new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
+        rud_config.pid.rud_spd_pid[1] =
+            new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
+        rud_config.pid.rud_spd_pid[2] =
+            new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
+        rud_config.pid.rud_spd_pid[3] =
+            new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
+
+        rud_config.pid.follow_yaw_pid =
+            new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
+
+        yaw_config.motor.yaw =
+            new dm_motor_drv_t(0x01, 0x02, pyro::can_hub_t::can2);
+        yaw_config.motor.yaw->set_position_range(-PI, PI);
+        yaw_config.motor.yaw->set_rotate_range(-20, 20);
+        yaw_config.motor.yaw->set_torque_range(-10, 10);
+
+        yaw_config.pid.yaw_pos_pid =
+            new pid_t(20.0f, 0.2f, 0.02f, 0.5f, 10.0f, 15, 150, 4);
+        yaw_config.pid.yaw_spd_pid =
+            new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
+
+        pyro::rud_chassis_t::instance()->configure(rud_config);
+        pyro::yaw_t::instance()->configure(yaw_config);
         pyro::rud_chassis_t::instance()->start();
         pyro::yaw_t::instance()->start();
 
@@ -64,8 +137,7 @@ extern "C"
                 rud_cmd_obj.timestamp  = 0;
                 rud_cmd_obj.vx         = dr16_data.rc.ch_lx * 2.0f;
                 rud_cmd_obj.vy         = dr16_data.rc.ch_ly * 2.0f;
-                yaw_cmd_obj.target_yaw_imu_angle -=
-                    dr16_data.rc.ch_rx * 0.01f;
+                yaw_cmd_obj.target_yaw_imu_angle -= dr16_data.rc.ch_rx * 0.01f;
                 rud_cmd_obj.yaw_error =
                     pyro::yaw_t::instance()->get_yaw_error();
             }
@@ -87,8 +159,7 @@ extern "C"
                     dr16_data.rc.ch_lx *
                         sinf(pyro::yaw_t::instance()->get_yaw_error());
                 rud_cmd_obj.wz = 2.0f;
-                yaw_cmd_obj.target_yaw_imu_angle -=
-                    dr16_data.rc.ch_rx * 0.01f;
+                yaw_cmd_obj.target_yaw_imu_angle -= dr16_data.rc.ch_rx * 0.01f;
             }
 
             pyro::rud_chassis_t::instance()->set_command(rud_cmd_obj);

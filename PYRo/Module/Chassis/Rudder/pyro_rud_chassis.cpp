@@ -31,50 +31,8 @@ rud_chassis_t::rud_chassis_t()
 
 void rud_chassis_t::_init()
 {
-    _kinematics = new rudder_kin_t(0.36f, 0.36f);
-
-    _ctx.motor.rudder[0] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_1,
-                                    can_hub_t::can2); // FL Rudder
-    _ctx.motor.rudder[1] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_2,
-                                    can_hub_t::can2); // BL Rudder
-    _ctx.motor.rudder[2] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_3,
-                                    can_hub_t::can1); // BR Rudder
-    _ctx.motor.rudder[3] =
-        new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_4,
-                                    can_hub_t::can1); // FR Rudder
-
-    _ctx.motor.wheel[0] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_1,
-                                  can_hub_t::can2); // FL Wheel
-    _ctx.motor.wheel[1] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_2,
-                                  can_hub_t::can2); // BL Wheel
-    _ctx.motor.wheel[2] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_3,
-                                  can_hub_t::can1); // BR Wheel
-    _ctx.motor.wheel[3] =
-        new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4,
-                                  can_hub_t::can1); // FR Wheel
-
-    _ctx.pid.wheel_pid[0]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[1]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[2]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-    _ctx.pid.wheel_pid[3]   = new pid_t(20.0f, 0.1f, 0.00f, 1.00f, 20.0f);
-
-    _ctx.pid.rud_pos_pid[0] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[1] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[2] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-    _ctx.pid.rud_pos_pid[3] = new pid_t(15.0f, 0.0f, 0.00f, 0.0f, 10.0f);
-
-    _ctx.pid.rud_spd_pid[0] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[1] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[2] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-    _ctx.pid.rud_spd_pid[3] = new pid_t(0.3f, 0.0f, 0.00f, 0.0f, 3.0f);
-
-    _ctx.pid.follow_yaw_pid = new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
+    _kinematics                             = new rudder_kin_t(0.36f, 0.36f);
+    _ctx.rud_config                         = _config;
 
     _ctx.config.rudder_pos_moving_offset[0] = 1.01472831f;
     _ctx.config.rudder_pos_moving_offset[1] = -0.29145637f;
@@ -116,28 +74,28 @@ void rud_chassis_t::_init()
 
 void rud_chassis_t::_update_feedback()
 {
-    _ctx.motor.rudder[0]->update_feedback();
-    _ctx.motor.rudder[1]->update_feedback();
-    _ctx.motor.rudder[2]->update_feedback();
-    _ctx.motor.rudder[3]->update_feedback();
-    _ctx.motor.wheel[0]->update_feedback();
-    _ctx.motor.wheel[1]->update_feedback();
-    _ctx.motor.wheel[2]->update_feedback();
-    _ctx.motor.wheel[3]->update_feedback();
+    _ctx.rud_config.motor.rudder[0]->update_feedback();
+    _ctx.rud_config.motor.rudder[1]->update_feedback();
+    _ctx.rud_config.motor.rudder[2]->update_feedback();
+    _ctx.rud_config.motor.rudder[3]->update_feedback();
+    _ctx.rud_config.motor.wheel[0]->update_feedback();
+    _ctx.rud_config.motor.wheel[1]->update_feedback();
+    _ctx.rud_config.motor.wheel[2]->update_feedback();
+    _ctx.rud_config.motor.wheel[3]->update_feedback();
 
     // 1. 四个舵机的角度和角速度
     // 舵机当前角度（-PI ~ PI）
     _ctx.data.current_states.modules[rudder_kin_t::FL].angle =
-        _ctx.motor.rudder[0]->get_current_position() -
+        _ctx.rud_config.motor.rudder[0]->get_current_position() -
         _ctx.config.rudder_pos_moving_offset[0];
     _ctx.data.current_states.modules[rudder_kin_t::FR].angle =
-        _ctx.motor.rudder[1]->get_current_position() -
+        _ctx.rud_config.motor.rudder[1]->get_current_position() -
         _ctx.config.rudder_pos_moving_offset[1];
     _ctx.data.current_states.modules[rudder_kin_t::BL].angle =
-        _ctx.motor.rudder[2]->get_current_position() -
+        _ctx.rud_config.motor.rudder[2]->get_current_position() -
         _ctx.config.rudder_pos_moving_offset[2];
     _ctx.data.current_states.modules[rudder_kin_t::BR].angle =
-        _ctx.motor.rudder[3]->get_current_position() -
+        _ctx.rud_config.motor.rudder[3]->get_current_position() -
         _ctx.config.rudder_pos_moving_offset[3];
     for (int i = 0; i < 4; i++)
     {
@@ -147,26 +105,30 @@ void rud_chassis_t::_update_feedback()
             _ctx.data.current_states.modules[i].angle += 2 * PI;
     }
     // 舵机当前角速度
-    _ctx.data.current_rud_radps[0] = _ctx.motor.rudder[0]->get_current_rotate();
-    _ctx.data.current_rud_radps[1] = _ctx.motor.rudder[1]->get_current_rotate();
-    _ctx.data.current_rud_radps[2] = _ctx.motor.rudder[2]->get_current_rotate();
-    _ctx.data.current_rud_radps[3] = _ctx.motor.rudder[3]->get_current_rotate();
+    _ctx.data.current_rud_radps[0] =
+        _ctx.rud_config.motor.rudder[0]->get_current_rotate();
+    _ctx.data.current_rud_radps[1] =
+        _ctx.rud_config.motor.rudder[1]->get_current_rotate();
+    _ctx.data.current_rud_radps[2] =
+        _ctx.rud_config.motor.rudder[2]->get_current_rotate();
+    _ctx.data.current_rud_radps[3] =
+        _ctx.rud_config.motor.rudder[3]->get_current_rotate();
 
     // 2. 四个轮子的 RPM
     _ctx.data.current_states.modules[rudder_kin_t::FL].speed =
-        _ctx.motor.wheel[0]->get_current_rotate() *
+        _ctx.rud_config.motor.wheel[0]->get_current_rotate() *
         dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
 
     _ctx.data.current_states.modules[rudder_kin_t::FR].speed =
-        _ctx.motor.wheel[1]->get_current_rotate() *
+        _ctx.rud_config.motor.wheel[1]->get_current_rotate() *
         dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
 
     _ctx.data.current_states.modules[rudder_kin_t::BL].speed =
-        _ctx.motor.wheel[2]->get_current_rotate() *
+        _ctx.rud_config.motor.wheel[2]->get_current_rotate() *
         dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
 
     _ctx.data.current_states.modules[rudder_kin_t::BR].speed =
-        _ctx.motor.wheel[3]->get_current_rotate() *
+        _ctx.rud_config.motor.wheel[3]->get_current_rotate() *
         dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
 }
 
@@ -174,8 +136,8 @@ void rud_chassis_t::_kinematics_solve()
 {
     if (_ctx.cmd->follow_yaw == true)
     {
-        _ctx.cmd->wz =
-            _ctx.pid.follow_yaw_pid->calculate(0, _ctx.cmd->yaw_error);
+        _ctx.cmd->wz = _ctx.rud_config.pid.follow_yaw_pid->calculate(
+            0, _ctx.cmd->yaw_error);
     }
     _ctx.data.target_states = _kinematics->solve(
         _ctx.cmd->vx, _ctx.cmd->vy, _ctx.cmd->wz, _ctx.data.current_states);
@@ -187,18 +149,21 @@ void rud_chassis_t::_chassis_control(rud_ctx_t *ctx)
     {
         // 舵机位置环
 
-        const float rud_pos_output = ctx->pid.rud_pos_pid[i]->calculate(
-            ctx->data.target_states.modules[i].angle,
-            ctx->data.current_states.modules[i].angle);
+        const float rud_pos_output =
+            ctx->rud_config.pid.rud_pos_pid[i]->calculate(
+                ctx->data.target_states.modules[i].angle,
+                ctx->data.current_states.modules[i].angle);
 
         // 舵机速度环
-        ctx->data.out_rud_torque[i] = ctx->pid.rud_spd_pid[i]->calculate(
-            rud_pos_output, ctx->data.current_rud_radps[i]);
+        ctx->data.out_rud_torque[i] =
+            ctx->rud_config.pid.rud_spd_pid[i]->calculate(
+                rud_pos_output, ctx->data.current_rud_radps[i]);
 
         // 轮子速度环
-        ctx->data.out_wheel_torque[i] = ctx->pid.wheel_pid[i]->calculate(
-            ctx->data.target_states.modules[i].speed,
-            ctx->data.current_states.modules[i].speed);
+        ctx->data.out_wheel_torque[i] =
+            ctx->rud_config.pid.wheel_pid[i]->calculate(
+                ctx->data.target_states.modules[i].speed,
+                ctx->data.current_states.modules[i].speed);
         cspeed[i] = ctx->data.current_states.modules[i].speed;
         tspeed[i] = ctx->data.target_states.modules[i].speed;
     }
@@ -236,14 +201,16 @@ void rud_chassis_t::_send_motor_command(rud_ctx_t *ctx)
     // 发送舵机扭矩命令
     for (int i = 0; i < 4; i++)
     {
-        ctx->motor.rudder[i]->send_torque(ctx->data.out_rud_torque[i]);
+        ctx->rud_config.motor.rudder[i]->send_torque(
+            ctx->data.out_rud_torque[i]);
     }
 
     // 发送轮子扭矩命令
     for (int i = 0; i < 4; i++)
     {
         ctorque[i] = ctx->data.out_wheel_torque[i];
-        ctx->motor.wheel[i]->send_torque(ctx->data.out_wheel_torque[i]);
+        ctx->rud_config.motor.wheel[i]->send_torque(
+            ctx->data.out_wheel_torque[i]);
     }
 }
 
