@@ -23,10 +23,9 @@ static float _radps_to_rpm(const float radps)
 // 构造与初始化
 // =========================================================
 
-hybrid_chassis_t::hybrid_chassis_t()
-    : module_base_t("hybrid")
+hybrid_chassis_t::hybrid_chassis_t() : module_base_t("hybrid")
 {
-    _ctx = {};
+    _ctx       = {};
     debug_data = {};
 }
 
@@ -34,84 +33,91 @@ void hybrid_chassis_t::_init()
 {
     _kinematics = new hybrid_kin_t(0.648f, 0.35f, 0.41f);
 
-    _ctx.motor.mecanum[0] =
+    _ctx.rud_config.motor.mecanum[0] =
         new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_1,
                                   can_hub_t::can1); // FL
-    _ctx.motor.mecanum[1] =
+    _ctx.rud_config.motor.mecanum[1] =
         new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_2,
                                   can_hub_t::can1); // FR
-    _ctx.motor.mecanum[2] =
+    _ctx.rud_config.motor.mecanum[2] =
         new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_3,
                                   can_hub_t::can1); // BL
-    _ctx.motor.mecanum[3] =
+    _ctx.rud_config.motor.mecanum[3] =
         new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4,
                                   can_hub_t::can1); // BR
-    // _ctx.motor.track[0]   = new dm_motor_drv_t(0x31, 0x41, can_hub_t::can3);
-    // _ctx.motor.track[1]   = new dm_motor_drv_t(0x32, 0x42, can_hub_t::can3);
-    _ctx.motor.leg[0] = new dm_motor_drv_t(0x11, 0x21, can_hub_t::can3);
-    _ctx.motor.leg[1] = new dm_motor_drv_t(0x12, 0x22, can_hub_t::can3);
+    // _ctx.rud_config.motor.track[0]   = new dm_motor_drv_t(0x31, 0x41,
+    // can_hub_t::can3); _ctx.rud_config.motor.track[1]   = new
+    // dm_motor_drv_t(0x32, 0x42, can_hub_t::can3);
+    _ctx.rud_config.motor.leg[0] =
+        new dm_motor_drv_t(0x11, 0x21, can_hub_t::can3);
+    _ctx.rud_config.motor.leg[1] =
+        new dm_motor_drv_t(0x12, 0x22, can_hub_t::can3);
 
     // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[0])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[0])
     //     ->set_position_range(-PI, PI);
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[0])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[0])
     //     ->set_rotate_range(-50, 50);
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[0])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[0])
     //     ->set_torque_range(-10, 10);
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[1])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[1])
     //     ->set_position_range(-PI, PI);
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[1])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[1])
     //     ->set_rotate_range(-50, 50);
-    // static_cast<dm_motor_drv_t *>(_ctx.motor.track[1])
+    // static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.track[1])
     //     ->set_torque_range(-10, 10);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[0])
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[0])
         ->set_position_range(-PI, PI);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[0])->set_rotate_range(-10, 10);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[0])->set_torque_range(-10, 10);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[1])
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[0])
+        ->set_rotate_range(-10, 10);
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[0])
+        ->set_torque_range(-10, 10);
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[1])
         ->set_position_range(-PI, PI);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[1])->set_rotate_range(-10, 10);
-    static_cast<dm_motor_drv_t *>(_ctx.motor.leg[1])->set_torque_range(-10, 10);
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[1])
+        ->set_rotate_range(-10, 10);
+    static_cast<dm_motor_drv_t *>(_ctx.rud_config.motor.leg[1])
+        ->set_torque_range(-10, 10);
     // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
-    _ctx.pid.mecanum_pid[0] =
+    _ctx.rud_config.pid.mecanum_pid[0] =
         new pid_t(0.28f, 0.0008f, 0.0002f, 1.0f, 20.0f, 20, 10, 4);
-    _ctx.pid.mecanum_pid[1] =
+    _ctx.rud_config.pid.mecanum_pid[1] =
         new pid_t(0.35f, 0.0007f, 0.0002f, 1.0f, 20.0f, 20, 10, 4);
-    _ctx.pid.mecanum_pid[2] =
+    _ctx.rud_config.pid.mecanum_pid[2] =
         new pid_t(0.37f, 0.0008f, 0.0002f, 1.0f, 20.0f, 20, 10, 4);
-    _ctx.pid.mecanum_pid[3] =
+    _ctx.rud_config.pid.mecanum_pid[3] =
         new pid_t(0.36f, 0.0006f, 0.0001f, 1.0f, 20.0f, 20, 10, 4);
 
     // Track Speed Loop
-    // for (auto &i : _ctx.pid.track_pid)
+    // for (auto &i : _ctx.rud_config.pid.track_pid)
     // {
     //     i = new pid_t(0.02f, 0.0001f, 0.000001f, 0.5f, 10.0f, 30, 10, 4);
     // }
 
     // Leg Position Loop (Inner loop)
-    // for (auto &i : _ctx.pid.leg_pos_pid)
+    // for (auto &i : _ctx.rud_config.pid.leg_pos_pid)
     // {
     //     i = new pid_t(10.0f, 0.005f, 0.008f, 0.5f, 20.0f, 20, 10, 4);
     // }
     //
-    // for (auto &i : _ctx.pid.leg_spd_pid)
+    // for (auto &i : _ctx.rud_config.pid.leg_spd_pid)
     // {
     //     i = new pid_t(10.0f, 0.005f, 0.008f, 0.5f, 7.0f, 20, 10, 4);
     // }
-    for (auto &i : _ctx.pid.leg_pos_pid)
+    for (auto &i : _ctx.rud_config.pid.leg_pos_pid)
     {
         i = new pid_t(15.0f, 0.005f, 0.008f, 0.5f, 20.0f, 20, 10, 4);
     }
 
-    for (auto &i : _ctx.pid.leg_spd_pid)
+    for (auto &i : _ctx.rud_config.pid.leg_spd_pid)
     {
         i = new pid_t(1.2f, 0.005f, 0.008f, 0.5f, 7.0f, 20, 10, 4);
     }
 
 
 
-    _ctx.pid.balance_pid =
+    _ctx.rud_config.pid.balance_pid =
         new pid_t(3.14f, 0.5f, 0.1f, 0.0f,
                   0.05f); // Output is radians (position offset)
 
@@ -121,44 +127,50 @@ void hybrid_chassis_t::_init()
 
 void hybrid_chassis_t::_update_feedback()
 {
-    _ctx.motor.mecanum[0]->update_feedback();
-    _ctx.motor.mecanum[1]->update_feedback();
-    _ctx.motor.mecanum[2]->update_feedback();
-    _ctx.motor.mecanum[3]->update_feedback();
-    _ctx.motor.leg[0]->update_feedback();
-    _ctx.motor.leg[1]->update_feedback();
-    // _ctx.motor.track[0]->update_feedback();
-    // _ctx.motor.track[1]->update_feedback();
+    _ctx.rud_config.motor.mecanum[0]->update_feedback();
+    _ctx.rud_config.motor.mecanum[1]->update_feedback();
+    _ctx.rud_config.motor.mecanum[2]->update_feedback();
+    _ctx.rud_config.motor.mecanum[3]->update_feedback();
+    _ctx.rud_config.motor.leg[0]->update_feedback();
+    _ctx.rud_config.motor.leg[1]->update_feedback();
+    // _ctx.rud_config.motor.track[0]->update_feedback();
+    // _ctx.rud_config.motor.track[1]->update_feedback();
 
     _ctx.data.current_wheel_rpm[0] =
-        _radps_to_rpm(_ctx.motor.mecanum[0]->get_current_rotate() *
+        _radps_to_rpm(_ctx.rud_config.motor.mecanum[0]->get_current_rotate() *
                       dji_m3508_motor_drv_t::reciprocal_reduction_ratio);
 
     _ctx.data.current_wheel_rpm[1] =
-        _radps_to_rpm(_ctx.motor.mecanum[1]->get_current_rotate() *
+        _radps_to_rpm(_ctx.rud_config.motor.mecanum[1]->get_current_rotate() *
                       dji_m3508_motor_drv_t::reciprocal_reduction_ratio);
 
     _ctx.data.current_wheel_rpm[2] =
-        _radps_to_rpm(_ctx.motor.mecanum[2]->get_current_rotate() *
+        _radps_to_rpm(_ctx.rud_config.motor.mecanum[2]->get_current_rotate() *
                       dji_m3508_motor_drv_t::reciprocal_reduction_ratio);
 
     _ctx.data.current_wheel_rpm[3] =
-        _radps_to_rpm(_ctx.motor.mecanum[3]->get_current_rotate() *
+        _radps_to_rpm(_ctx.rud_config.motor.mecanum[3]->get_current_rotate() *
                       dji_m3508_motor_drv_t::reciprocal_reduction_ratio);
 
     // 2. 两条履带的 RPM、腿角度、腿角速度
     // _ctx.data.current_track_rpm[0] =
-    //     _radps_to_rpm(_ctx.motor.track[0]->get_current_rotate());
+    //     _radps_to_rpm(_ctx.rud_config.motor.track[0]->get_current_rotate());
     // _ctx.data.current_track_rpm[1] =
-    //     _radps_to_rpm(_ctx.motor.track[1]->get_current_rotate());
+    //     _radps_to_rpm(_ctx.rud_config.motor.track[1]->get_current_rotate());
 
-    _ctx.data.current_leg_rad[0]   = _ctx.motor.leg[0]->get_current_position();
-    _ctx.data.current_leg_radps[0] = _ctx.motor.leg[0]->get_current_rotate();
-    _ctx.data.current_leg_rad[1]   = _ctx.motor.leg[1]->get_current_position();
-    _ctx.data.current_leg_radps[1] = _ctx.motor.leg[1]->get_current_rotate();
+    _ctx.data.current_leg_rad[0] =
+        _ctx.rud_config.motor.leg[0]->get_current_position();
+    _ctx.data.current_leg_radps[0] =
+        _ctx.rud_config.motor.leg[0]->get_current_rotate();
+    _ctx.data.current_leg_rad[1] =
+        _ctx.rud_config.motor.leg[1]->get_current_position();
+    _ctx.data.current_leg_radps[1] =
+        _ctx.rud_config.motor.leg[1]->get_current_rotate();
 
-    debug_data.debug_leg_torque[0] = _ctx.motor.leg[0]->get_current_torque();
-    debug_data.debug_leg_torque[1] = _ctx.motor.leg[1]->get_current_torque();
+    debug_data.debug_leg_torque[0] =
+        _ctx.rud_config.motor.leg[0]->get_current_torque();
+    debug_data.debug_leg_torque[1] =
+        _ctx.rud_config.motor.leg[1]->get_current_torque();
 }
 
 void hybrid_chassis_t::_kinematics_solve()
@@ -273,14 +285,14 @@ void hybrid_chassis_t::_fsm_execute()
         _main_fsm.change_state(&_state_passive);
 
     // 2. 反馈更新
-    // _pure_update_feedback(_ctx.motor, _ctx.data);
+    // _pure_update_feedback(_ctx.rud_config.motor, _ctx.data);
 
     // 3. 状态机运行
     // 父级 execute 内部会自动调用 fetch_request 处理子状态的切换请求
     _main_fsm.execute(this);
 
     // 4. 硬件输出
-    // _pure_hw_write(_ctx.motor, _ctx.data);
+    // _pure_hw_write(_ctx.rud_config.motor, _ctx.data);
 }
 
 
