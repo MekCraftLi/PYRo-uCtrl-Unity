@@ -1,8 +1,8 @@
 #ifndef __PYRO_CORE_CONFIG_H__
 #define __PYRO_CORE_CONFIG_H__
 
-#define DEMO_MODE  1
-#define DEBUG_MODE 0
+// #define DEMO_MODE 1
+// #define DEBUG_MODE 0
 
 #if DEMO_MODE
 
@@ -22,23 +22,22 @@
 
 #endif
 
-#define IMU_CALIBRATION_EN 0
+// #define IMU_CALIBRATION_EN 0
+//
+// #define TEST_ROBOT_ID 0
+// #define HERO_ID   1
+// #define SUB_HERO_ID 10
+// #define ENGINEER_ID 2
+// #define SUB_ENGINEER_ID 20
+// #define INFANTRY1_ID 3
+// #define INFANTRY2_ID 4
+// #define SUB_INFANTRY_ID 30
+// #define SENTRY_ID 5
+// #define SUB_SENTRY_ID 6
+// #define UAV_ID 7
+// #define DARTS_ID 8
+// #define RADAR_ID 9
 
-#define TEST_ROBOT_ID      0
-#define HERO_ID            1
-#define SUB_HERO_ID        10
-#define ENGINEER_ID        2
-#define SUB_ENGINEER_ID    20
-#define INFANTRY1_ID       3
-#define INFANTRY2_ID       4
-#define SUB_INFANTRY_ID    30
-#define SENTRY_ID          5
-#define SUB_SENTRY_ID      6
-#define UAV_ID             7
-#define DARTS_ID           8
-#define RADAR_ID           9
-
-#define ROBOT_ID           SENTRY_ID
 
 #if ROBOT_ID == SENTRY_ID
 
@@ -48,6 +47,16 @@
 #define BOARD_ID   CHASSIS_ID
 #endif
 
+#define PYRO_UART1 1
+#define PYRO_UART5 2
+#define PYRO_UART7 3
+#define PYRO_UART10 4
+
+#define DR16_UART PYRO_UART5
+#define VT03_UART PYRO_UART1
+
+#define VOFA_DEBUG_PORT PYRO_UART10
+#define JCOM_DEBUG_PORT PYRO_UART7
 
 
 #endif // PYRO_PYRO_CORE_CONFIG_H

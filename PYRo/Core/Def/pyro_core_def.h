@@ -19,18 +19,23 @@ enum status_t
 
 constexpr float PI = 3.14159265358979323846f;
 
-#define CHECK_HAL_RET(ret)                                                     \
-    if (HAL_OK != ret)                                                         \
-    {                                                                          \
-        return PYRO_ERROR;                                                     \
-    }
+#define CHECK_HAL_RET(ret)        if(HAL_OK != ret)           \
+                                  {                           \
+                                    return PYRO_ERROR;        \
+                                  }                                    
 
-#define CHECK_OS_RET(ret)                                                      \
-    if (pdPASS != ret)                                                         \
-    {                                                                          \
-        return PYRO_ERROR;                                                     \
-    }
-
+#define CHECK_OS_RET(ret)         if(pdPASS != ret)           \
+                                  {                           \
+                                    return PYRO_ERROR;        \
+                                  }    
+#define CHECK_PYRO_RET(ret)     if(PYRO_OK != ret)            \
+                                  {                           \
+                                    return ret;               \
+                                  }
+#define CHECK_ARM_MATH_RET(ret)  if(ARM_MATH_SUCCESS != ret)  \
+                                  {                           \
+                                    return PYRO_ERROR;        \
+                                  }
 #define CHECK_POINT_NULL(ptr)                                                  \
     if (nullptr == ptr)                                                        \
     {                                                                          \
@@ -42,15 +47,7 @@ constexpr float PI = 3.14159265358979323846f;
     {                                                                          \
         while (1)                                                              \
             ;                                                                  \
-    }
-
-
-#define CHECK_ARM_MATH_RET(ret)                                                \
-    if (ARM_MATH_SUCCESS != ret)                                               \
-    {                                                                          \
-        return PYRO_ERROR;                                                     \
-    }
-
+    }                                  
 #ifdef USE_LOG
 #define PYRO_ASSERT_RET(expr)                                                  \
     ((expr) ? PYRO_OK : log((uint8_t *)__FILE__, __LINE__))
