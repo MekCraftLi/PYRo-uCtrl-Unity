@@ -5,8 +5,6 @@ cmake_minimum_required(VERSION 3.22)
 # 包含机器人配置（定义ROBOT_NAME）
 include(${CMAKE_CURRENT_SOURCE_DIR}/PYRo/cmake/config/pyro_robot_id_config.cmake)
 
-
-
 # ==============================================================================
 # 1. 编译器与工具链配置 (已由 gcc-arm-none-eabi.cmake 处理)
 # ==============================================================================
@@ -121,13 +119,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         ## --- Mission ---
         PYRo/Application/Mission/pyro_init_thread.cpp
         PYRo/Application/Mission/pyro_mission_planer.cpp
-        ### --- Hero ---
-        PYRo/Application/Mission/Hero/pyro_gimbal_app.cpp
-        PYRo/Application/Mission/Hero/pyro_booster_app.cpp
-
 
         # --- Moudule ---
-
         ## --- Chassis ---
         PYRo/Module/Chassis/Mecanum/pyro_mec_chassis.cpp
         PYRo/Module/Chassis/Mecanum/fsm/pyro_mec_passive_state.cpp
@@ -163,8 +156,16 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Module/Booster/Quad/fsm/pyro_quad_stall_state.cpp
         PYRo/Module/Booster/Quad/fsm/pyro_quad_interim_state.cpp
         PYRo/Module/Booster/Quad/fsm/pyro_quad_busy_state.cpp
-
 )
+if (ROBOT_ID EQUAL HERO_ID)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        PYRo/Application/Mission/Hero/pyro_gimbal_app.cpp
+        PYRo/Application/Mission/Hero/pyro_booster_app.cpp
+        PYRo/Application/Mission/Hero/pyro_chassis_app.cpp
+    )
+elseif (ROBOT_ID EQUAL 10)
+
+endif ()
 
 add_subdirectory(cmake/stm32cubemx)
 
