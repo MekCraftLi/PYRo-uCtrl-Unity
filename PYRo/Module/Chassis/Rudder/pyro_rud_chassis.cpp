@@ -33,41 +33,6 @@ void rud_chassis_t::_init()
 {
     _kinematics                             = new rudder_kin_t(0.36f, 0.36f);
     _ctx.rud_config                         = _config;
-
-    _ctx.config.rudder_pos_moving_offset[0] = 1.01472831f;
-    _ctx.config.rudder_pos_moving_offset[1] = -0.29145637f;
-    _ctx.config.rudder_pos_moving_offset[2] = -1.87299052f;
-    _ctx.config.rudder_pos_moving_offset[3] = -1.04003897f;
-
-    power_control_drv_t &power_controller = power_control_drv_t::get_instance();
-    power_control_drv_t::motor_coefficient_t coef1;
-    coef1.k1 = 0;
-    coef1.k2 = 0;
-    coef1.k3 = 0;
-    coef1.k4 = 0;
-    power_controller.set_motor_coefficient(1, coef1);
-
-    power_control_drv_t::motor_coefficient_t coef2;
-    coef2.k1 = 0;
-    coef2.k2 = 0;
-    coef2.k3 = 0;
-    coef2.k4 = 0;
-    power_controller.set_motor_coefficient(2, coef2);
-
-    power_control_drv_t::motor_coefficient_t coef3;
-    coef3.k1 = 0;
-    coef3.k2 = 0;
-    coef3.k3 = 0;
-    coef3.k4 = 0;
-    power_controller.set_motor_coefficient(3, coef3);
-
-    power_control_drv_t::motor_coefficient_t coef4;
-    coef4.k1 = 0;
-    coef4.k2 = 0;
-    coef4.k3 = 0;
-    coef4.k4 = 0;
-    power_controller.set_motor_coefficient(4, coef4);
-
     _ctx.hardware.power_meter = new powermeter_drv_t(0x212, can_hub_t::can2);
     _ctx.power.data           = new powermeter_data();
 }
@@ -87,16 +52,16 @@ void rud_chassis_t::_update_feedback()
     // 舵机当前角度（-PI ~ PI）
     _ctx.data.current_states.modules[rudder_kin_t::FL].angle =
         _ctx.rud_config.motor.rudder[0]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[0];
+        _ctx.rud_config.rud_pos_moving_offset[0];
     _ctx.data.current_states.modules[rudder_kin_t::FR].angle =
         _ctx.rud_config.motor.rudder[1]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[1];
+        _ctx.rud_config.rud_pos_moving_offset[1];
     _ctx.data.current_states.modules[rudder_kin_t::BL].angle =
         _ctx.rud_config.motor.rudder[2]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[2];
+        _ctx.rud_config.rud_pos_moving_offset[2];
     _ctx.data.current_states.modules[rudder_kin_t::BR].angle =
         _ctx.rud_config.motor.rudder[3]->get_current_position() -
-        _ctx.config.rudder_pos_moving_offset[3];
+        _ctx.rud_config.rud_pos_moving_offset[3];
     for (int i = 0; i < 4; i++)
     {
         if (_ctx.data.current_states.modules[i].angle > PI)

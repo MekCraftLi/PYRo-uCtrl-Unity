@@ -37,6 +37,7 @@ struct yaw_cfg_t
 
     motor_cfg_t motor;
     pid_cfg_t pid;
+    float yaw_offset;
 };
 
 class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t, yaw_cfg_t>
@@ -68,15 +69,6 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t, yaw_cfg_t>
     static void _yaw_control(yaw_ctx_t *ctx);
     static void _send_motor_command(yaw_ctx_t *ctx);
 
-
-    // 电机句柄
-
-
-    struct config_ctx_t
-    {
-        float yaw_offset{};
-    };
-
     struct data_ctx_t
     {
         float gimbal_world_yaw;
@@ -92,7 +84,6 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t, yaw_cfg_t>
     {
         yaw_cfg_t yaw_config;
         data_ctx_t data{};
-        config_ctx_t config;
         yaw_cmd_t *cmd{};
     };
 

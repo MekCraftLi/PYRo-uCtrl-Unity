@@ -44,6 +44,7 @@ struct rud_cfg_t
 
     motor_cfg_t motor;
     pid_cfg_t pid;
+    float rud_pos_moving_offset[4]{};
 };
 
 // 继承模板基类，传入具体的命令类型
@@ -79,14 +80,6 @@ class rud_chassis_t final
 
     rudder_kin_t *_kinematics{nullptr};
 
-
-
-    struct config_ctx_t
-    {
-        float rudder_pos_moving_offset[4]{};
-        float rudder_pos_braking_offset[4]{};
-    };
-
     struct data_ctx_t
     {
         rudder_kin_t::rudder_states_t current_states{};
@@ -121,7 +114,6 @@ class rud_chassis_t final
         hardware_ctx_t hardware;
         power_ctx_t power;
         data_ctx_t data;
-        config_ctx_t config;
         rud_cmd_t *cmd;
         drive_mode_t drive_mode;
     };

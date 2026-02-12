@@ -79,6 +79,42 @@ extern "C"
         rud_config.pid.follow_yaw_pid =
             new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
 
+        rud_config.rud_pos_moving_offset[0] = 1.01472831f;
+        rud_config.rud_pos_moving_offset[0] = -0.29145637f;
+        rud_config.rud_pos_moving_offset[0] = -1.87299052f;
+        rud_config.rud_pos_moving_offset[0] = -1.04003897f;        
+
+        power_control_drv_t &power_controller = power_control_drv_t::get_instance();
+        power_control_drv_t::motor_coefficient_t coef1;
+        coef1.k1 = 0;
+        coef1.k2 = 0;
+        coef1.k3 = 0;
+        coef1.k4 = 0;
+        power_controller.set_motor_coefficient(1, coef1);
+
+        power_control_drv_t::motor_coefficient_t coef2;
+        coef2.k1 = 0;
+        coef2.k2 = 0;
+        coef2.k3 = 0;
+        coef2.k4 = 0;
+        power_controller.set_motor_coefficient(2, coef2);
+
+        power_control_drv_t::motor_coefficient_t coef3;
+        coef3.k1 = 0;
+        coef3.k2 = 0;
+        coef3.k3 = 0;
+        coef3.k4 = 0;
+        power_controller.set_motor_coefficient(3, coef3);
+
+        power_control_drv_t::motor_coefficient_t coef4;
+        coef4.k1 = 0;
+        coef4.k2 = 0;
+        coef4.k3 = 0;
+        coef4.k4 = 0;
+        power_controller.set_motor_coefficient(4, coef4);
+
+
+
         yaw_config.motor.yaw =
             new dm_motor_drv_t(0x01, 0x02, pyro::can_hub_t::can2);
         yaw_config.motor.yaw->set_position_range(-PI, PI);
@@ -89,6 +125,8 @@ extern "C"
             new pid_t(20.0f, 0.2f, 0.02f, 0.5f, 10.0f, 15, 150, 4);
         yaw_config.pid.yaw_spd_pid =
             new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
+
+        yaw_config.yaw_offset = -2.40028524f;
 
         pyro::rud_chassis_t::instance()->configure(rud_config);
         pyro::yaw_t::instance()->configure(yaw_config);

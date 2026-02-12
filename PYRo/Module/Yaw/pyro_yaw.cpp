@@ -66,7 +66,6 @@ float yaw_t::get_yaw_error() const
 void yaw_t::_init()
 {
     _ctx.yaw_config        = _config;
-    _ctx.config.yaw_offset = -2.40028524f;
 }
 
 void yaw_t::_update_feedback()
@@ -77,7 +76,7 @@ void yaw_t::_update_feedback()
     // yaw轴当前角度（电机角度， -PI ~ PI）
     _ctx.data.current_yaw_angle =
         wrap_pi(_ctx.yaw_config.motor.yaw->get_current_position() -
-                _ctx.config.yaw_offset);
+                _ctx.yaw_config.yaw_offset);
     cyaw = _ctx.data.current_yaw_angle;
 
     // 这里需要获取底盘imu数据减去大yaw的机械角度得到yaw轴的imu角度
