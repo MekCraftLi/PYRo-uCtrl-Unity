@@ -22,8 +22,24 @@ struct yaw_cmd_t : cmd_base_t
     {
     }
 };
+struct yaw_cfg_t
+{
+    struct motor_cfg_t
+    {
+        dm_motor_drv_t *yaw{nullptr};
+    };
 
-class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
+    struct pid_cfg_t
+    {
+        pid_t *yaw_pos_pid{nullptr};
+        pid_t *yaw_spd_pid{nullptr};
+    };
+
+    motor_cfg_t motor;
+    pid_cfg_t pid;
+};
+
+class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t, yaw_cfg_t>
 {
     friend class module_base_t;
     friend class vofa_drv_t;
@@ -39,45 +55,6 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
 
     float get_yaw_error() const;
 
-    struct motor_cfg_t
-    {
-        uint32_t can_id;
-        uint32_t master_id;
-        can_hub_t::which_can yaw_can;
-        float min_pos_range;
-        float max_pos_range;
-        float min_rotate_range;
-        float max_rotate_range;
-        float min_torque_range;
-        float max_torque_range;
-    };
-
-    struct offset_cfg_t
-    {
-        float yaw_offset;
-    };
-
-    struct pid_cfg_t
-    {
-        pid_t *yaw_pos_pid;
-        pid_t *yaw_spd_pid;
-    };
-
-    struct cfg_t
-    {
-        motor_cfg_t motor_cfg;
-        offset_cfg_t offset_cfg;
-        pid_cfg_t pid_cfg;
-    };
-
-    template <typename cfg_type> status_t config(cfg_type *cfg_t)
-    {
-        return config_template(cfg_t);
-    }
-
-  protected:
-    status_t config_impl(void *cfg_t) override;
-
   private:
     yaw_t();
     ~yaw_t() override = default;
@@ -87,23 +64,13 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
     void _update_feedback() override;
     void _fsm_execute() override;
 
-
     // --- 派生方法 ---
     static void _yaw_control(yaw_ctx_t *ctx);
     static void _send_motor_command(yaw_ctx_t *ctx);
 
 
     // 电机句柄
-    struct motor_ctx_t
-    {
-        dm_motor_drv_t *yaw{nullptr};
-    };
 
-    struct pid_ctx_t
-    {
-        pid_t *yaw_pos_pid{nullptr};
-        pid_t *yaw_spd_pid{nullptr};
-    };
 
     struct config_ctx_t
     {
@@ -123,11 +90,10 @@ class yaw_t final : public module_base_t<yaw_t, yaw_cmd_t>
 
     struct yaw_ctx_t
     {
-        motor_ctx_t motor;
-        pid_ctx_t pid;
-        data_ctx_t data;
+        yaw_cfg_t yaw_config;
+        data_ctx_t data{};
         config_ctx_t config;
-        yaw_cmd_t *cmd;
+        yaw_cmd_t *cmd{};
     };
 
     struct debug_ctx_t

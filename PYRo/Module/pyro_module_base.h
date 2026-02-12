@@ -23,7 +23,6 @@
 #include "pyro_core_fsm.h"
 #include "pyro_mutex.h"
 #include "pyro_task.h"
-#include "pyro_core_def.h"
 
 namespace pyro
 {
@@ -36,11 +35,11 @@ struct cmd_base_t
 {
     enum class mode_t : uint8_t
     {
-        PASSIVE,
+        ZERO_FORCE,
         ACTIVE
     } mode;
     uint32_t timestamp;
-    cmd_base_t() : mode(mode_t::PASSIVE), timestamp(0)
+    cmd_base_t() : mode(mode_t::ZERO_FORCE), timestamp(0)
     {
     }
     virtual ~cmd_base_t() = default;
@@ -50,37 +49,22 @@ struct cmd_base_t
  * @brief CRTP Template for Module Base.
  * 模块基类的 CRTP 模板。
  */
-template <typename Derived, typename CmdType> class module_base_t
+template <typename Derived, typename CmdType, typename ConfigData>
+class module_base_t
 {
   public:
-    template <typename cfg_type> static Derived *instance(cfg_type *cfg_t)
+    static Derived *instance()
     {
         static Derived _instance_obj; // NOLINT
-        if (PYRO_OK != _instance_obj.config_template(cfg_t))
-            return nullptr;
         return &_instance_obj;
     }
 
-    /*
-     * @brief Starts the module task. Must be explicitly called.
-     * 启动模块任务,需要显式调用
-     */
+    void configure(const ConfigData &config);
     void start();
-    /*
-     * @brief Sets the current command for the module. Thread-safe.
-     * 设置模块当前命令,线程安全（内部环形缓冲区实现）
-     */
-    bool set_command(const CmdType &cmd);
+    void set_command(const CmdType &cmd);
     [[nodiscard]] mutex_t &get_mutex();
 
   protected:
-    virtual status_t config_impl(void *cfg_t) = 0;
-
-    template <typename cfg_type> status_t config_template(cfg_type *cfg_t)
-    {
-        return config_impl(static_cast<void *>(cfg_t));
-    }
-
     explicit module_base_t(
         const char *name = "module_task", uint16_t init_stack = 512,
         uint16_t loop_stack              = 256,
@@ -97,9 +81,9 @@ template <typename Derived, typename CmdType> class module_base_t
     /** @brief Callback for FSM execution. 状态机执行回调。 */
     virtual void _fsm_execute()     = 0;
 
-
-
-    CmdType _current_cmd;
+    CmdType _cmd[2];
+    ConfigData _config;
+    uint8_t _read_index{0};
 
   private:
     class module_task_t final : public task_base_t
@@ -121,14 +105,8 @@ template <typename Derived, typename CmdType> class module_base_t
     void _run_loop_impl();
 
     module_task_t _task;
+    bool _cmd_updated{false};
     mutex_t _mutex;
-
-    static constexpr uint8_t CMD_BUF_SIZE = 16; // 缓冲区大小，建议为 2 的幂
-    CmdType _cmd_buffer[CMD_BUF_SIZE];
-
-    // 读写指针
-    volatile uint8_t _head{0}; // 写入位置 (Write Index)
-    volatile uint8_t _tail{0}; // 读取位置 (Read Index)
 };
 
 } // namespace pyro

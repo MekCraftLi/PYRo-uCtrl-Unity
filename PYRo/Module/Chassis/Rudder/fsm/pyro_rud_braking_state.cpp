@@ -20,7 +20,7 @@ void rud_chassis_t::fsm_active_t::state_braking_t::execute(rud_chassis_t *owner)
 
     _send_motor_command(&owner->_ctx);
 
-    if (owner->_current_cmd.vx != 0 || owner->_current_cmd.vy != 0)
+    if (owner->_cmd->vx != 0 || owner->_cmd->vy != 0)
         owner->_ctx.drive_mode = rud_chassis_t::drive_mode_t::TURNING;
 }
 
