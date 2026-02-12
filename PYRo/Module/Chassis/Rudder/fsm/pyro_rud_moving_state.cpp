@@ -21,7 +21,7 @@ void rud_chassis_t::fsm_active_t::state_moving_t::enter(rud_chassis_t *owner)
 
 void rud_chassis_t::fsm_active_t::state_moving_t::execute(rud_chassis_t *owner)
 {
-    bool stick_is_zero = (owner->_cmd->vx == 0 && owner->_cmd->vy == 0);
+    bool stick_is_zero = (owner->_current_cmd.vx == 0 && owner->_current_cmd.vy == 0);
 
     // 判断电机速度
     for (int i = 0; i < 4; i++)

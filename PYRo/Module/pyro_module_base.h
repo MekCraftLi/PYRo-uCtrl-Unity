@@ -61,7 +61,7 @@ class module_base_t
 
     void configure(const ConfigData &config);
     void start();
-    void set_command(const CmdType &cmd);
+    bool set_command(const CmdType &cmd);
     [[nodiscard]] mutex_t &get_mutex();
 
   protected:
@@ -81,7 +81,7 @@ class module_base_t
     /** @brief Callback for FSM execution. 状态机执行回调。 */
     virtual void _fsm_execute()     = 0;
 
-    CmdType _cmd[2];
+    CmdType _current_cmd;
     ConfigData _config;
     uint8_t _read_index{0};
 
@@ -105,8 +105,14 @@ class module_base_t
     void _run_loop_impl();
 
     module_task_t _task;
-    bool _cmd_updated{false};
     mutex_t _mutex;
+    
+    static constexpr uint8_t CMD_BUF_SIZE = 16; // 缓冲区大小，建议为 2 的幂
+    CmdType _cmd_buffer[CMD_BUF_SIZE];
+
+    // 读写指针
+    volatile uint8_t _head{0}; // 写入位置 (Write Index)
+    volatile uint8_t _tail{0}; // 读取位置 (Read Index)
 };
 
 } // namespace pyro
