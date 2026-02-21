@@ -151,21 +151,47 @@ set(BG_RGB_DEFAULT "49")
 # 预设组合格式（使用常量定义，方便阅读和修改）
 # ===========================================
 
-# 成功状态格式
-set(SUCCESS_FORMAT "${ESC}[${STYLE_BOLD};${FG_WHITE};${BG_GREEN}m") # 粗体白字绿背景
+# =============================================================================
+#  Modern UI Palette (Based on Tailwind CSS & Ant Design)
+# =============================================================================
 
-# 警告状态格式
-set(WARNING_FORMAT "${ESC}[${STYLE_BOLD};${FG_BLACK};${BG_YELLOW}m") # 粗体黑字黄背景
+# 核心功能色 (RGB)
+set(RGB_EMERALD_500 "48;2;16;185;129")   # 成功 (Success) - 清新翠绿
+set(RGB_AMBER_500   "48;2;245;158;11")   # 警告 (Warning) - 温暖琥珀
+set(RGB_ROSE_500    "48;2;244;63;94")    # 错误 (Error)   - 柔和玫瑰红
+set(RGB_SKY_500     "48;2;14;165;233")   # 信息 (Info)    - 天空蓝
+set(RGB_VIOLET_500  "48;2;139;92;246")   # 标题 (Title)   - 罗兰紫
+set(RGB_SLATE_800   "48;2;30;41;59")     # 深色背景 (Dark Bg)
 
-# 错误状态格式
-set(ERROR_FORMAT "${ESC}[${STYLE_BOLD};${FG_WHITE};${BG_RED}m") # 粗体白字红背景
+# 辅助文本色 (RGB 前景)
+set(F_RGB_WHITE     "38;2;255;255;255")  # 纯白文本
+set(F_RGB_SLATE_900 "38;2;15;23;42")     # 深色文本 (配合浅背景)
+set(F_RGB_CYAN_400  "38;2;34;211;238")   # 高亮青色文本
+set(F_RGB_INDIGO_400 "38;2;129;140;248") # 边框蓝紫文本
 
-# 信息状态格式
-set(INFO_FORMAT "${ESC}[${STYLE_BOLD};${FG_WHITE};${BG_BLUE}m") # 粗体白字蓝背景
+# =============================================================================
+#  预设组合格式 (Modern UI Style)
+# =============================================================================
 
-# 标题格式
-set(TITLE_FORMAT "${ESC}[${STYLE_BOLD};${FG_WHITE};${BG_MAGENTA}m") # 粗体白字紫背景
+# 成功状态 [Success]: 翠绿背景 + 纯白文字 + 粗体
+# 视觉心理：通过降低绿色的饱和度，使其不刺眼但充满活力
+set(SUCCESS_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_WHITE};${RGB_EMERALD_500}m")
 
-# 强调格式
-set(HIGHLIGHT_FORMAT "${ESC}[${STYLE_BOLD};${FG_BLACK};${BG_WHITE}m") # 粗体黑字白背景
+# 警告状态 [Warning]: 琥珀色背景 + 深色文字(增加对比度) + 粗体
+# 前端原则：黄色背景上通常使用深色文字以保证可读性 (A11y)
+set(WARNING_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_SLATE_900};${RGB_AMBER_500}m")
 
+# 错误状态 [Error]: 玫瑰红背景 + 纯白文字 + 粗体
+# 视觉心理：比纯红(#FF0000)更现代，具有警示性但不产生视觉疲劳
+set(ERROR_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_WHITE};${RGB_ROSE_500}m")
+
+# 信息状态 [Info]: 天空蓝背景 + 纯白文字 + 粗体
+set(INFO_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_WHITE};${RGB_SKY_500}m")
+
+# 标题格式 [Title]: 罗兰紫背景 + 纯白文字 + 粗体
+# 视觉心理：紫色代表高级感和统领性，适合作为 Header
+set(TITLE_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_WHITE};${RGB_VIOLET_500}m")
+
+# 强调格式 [Highlight]: 亮白文字 + 深蓝灰背景 (类似代码块效果)
+# 设计风格：模仿 Markdown 代码块的渲染效果
+set(HIGHLIGHT_FORMAT "${ESC}[${STYLE_BOLD};${F_RGB_CYAN_400};${RGB_SLATE_800}m")
