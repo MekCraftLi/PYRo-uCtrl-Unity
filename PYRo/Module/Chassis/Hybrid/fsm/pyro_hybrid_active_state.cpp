@@ -6,12 +6,12 @@ namespace pyro
 
 void hybrid_chassis_t::fsm_active_t::on_enter(owner *owner)
 {
-    owner->_ctx.motor.mecanum[0]->enable();
-    owner->_ctx.motor.mecanum[1]->enable();
-    owner->_ctx.motor.mecanum[2]->enable();
-    owner->_ctx.motor.mecanum[3]->enable();
-    owner->_ctx.motor.leg[0]->enable();
-    owner->_ctx.motor.leg[1]->enable();
+    owner->_ctx.rud_config.motor.mecanum[0]->enable();
+    owner->_ctx.rud_config.motor.mecanum[1]->enable();
+    owner->_ctx.rud_config.motor.mecanum[2]->enable();
+    owner->_ctx.rud_config.motor.mecanum[3]->enable();
+    owner->_ctx.rud_config.motor.leg[0]->enable();
+    owner->_ctx.rud_config.motor.leg[1]->enable();
 }
 
 void hybrid_chassis_t::fsm_active_t::on_execute(owner *owner)

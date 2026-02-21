@@ -15,7 +15,7 @@ include("${CMAKE_SOURCE_DIR}/PYRo/cmake/pyro_format.cmake")
 
 set(DEMO_MODE 1 CACHE STRING "Enable Demo Mode (1=ON, 0=OFF)")
 set(DEBUG_MODE 1 CACHE STRING "Enable Debug Mode (1=ON, 0=OFF)")
-set(IMU_CALIGRATION_EN 0 CACHE STRING "Enable IMU Calibration (1=ON, 0=OFF)")
+set(IMU_CALIBRATION_EN 0 CACHE STRING "Enable IMU Calibration (1=ON, 0=OFF)")
 
 # -----------------------------------------------------------------------------
 # 3. 校验逻辑 & ID 映射
@@ -90,7 +90,7 @@ endif()
 
 add_compile_definitions(DEMO_MODE=${DEMO_MODE})
 add_compile_definitions(DEBUG_MODE=${DEBUG_MODE})
-add_compile_definitions(IMU_CALIGRATION_EN=${IMU_CALIGRATION_EN})
+add_compile_definitions(IMU_CALIBRATION_EN=${IMU_CALIBRATION_EN})
 
     # 传递常量 ID
 add_compile_definitions(TEST_ROBOT_ID=${TEST_ROBOT_ID})
@@ -223,7 +223,7 @@ endif()
 
 
 if(CONFIG_VALID STREQUAL "TRUE")
-    if(IMU_CALIGRATION_EN STREQUAL "1" OR IMU_CALIGRATION_EN STREQUAL "ON")
+    if(IMU_CALIBRATION_EN STREQUAL "1" OR IMU_CALIBRATION_EN STREQUAL "ON")
         set(RAW_WARN "[!] WARNING: IMU 校准状态，不要上力!!!")
         CALC_CENTER_PAD("${RAW_WARN}" PAD_WARN)
         set(LINE_WARN_CONTENT "${PAD_WARN}${ERROR_FORMAT} ${RAW_WARN} ${RESET_ALL}")

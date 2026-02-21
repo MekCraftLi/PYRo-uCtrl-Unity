@@ -20,7 +20,7 @@ struct hybrid_cmd_t : cmd_base_t
     hybrid_kin_t::drive_mode_t drive_mode;
     uint8_t leg_contract_mode;
     uint8_t jump_mode;
-    float vx,vy,wz,wy;
+    float vx, vy, wz, wy;
 
     hybrid_cmd_t()
         : drive_mode(hybrid_kin_t::drive_mode_t::CRUISING),

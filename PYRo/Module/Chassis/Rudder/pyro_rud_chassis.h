@@ -1,110 +1,183 @@
 #ifndef __PYRO_RUD_CHASSIS_H__
 #define __PYRO_RUD_CHASSIS_H__
 
+#define POWER_CONTROL_USE 0
+
 #include "pyro_algo_pid.h"
-#include "pyro_chassis_base.h"
+#include "pyro_module_base.h"
+#include "pyro_dji_motor_drv.h"
+#include "pyro_dm_motor_drv.h"
 #include "pyro_kin_rudder.h"
 #include "pyro_motor_base.h"
+#include "pyro_powermeter.h"
+#include "pyro_power_control_drv.h"
 
 namespace pyro
 {
 
 // 定义舵轮特有的命令结构（如果有额外参数）
-struct cmd_rud_t final : cmd_base_t
+struct rud_cmd_t : cmd_base_t
 {
-    // 如果有舵轮特有的控制量（如锁舵模式标志位），可以在此添加
-    cmd_rud_t() : cmd_base_t() {}
+    float vx, vy, wz, yaw_error;
+    bool follow_yaw;
+    rud_cmd_t() : vx(0), vy(0), wz(0), yaw_error(0), follow_yaw(false)
+    {
+    }
+};
+
+struct rud_cfg_t
+{
+    // 电机句柄
+    struct motor_cfg_t
+    {
+        motor_base_t *rudder[4]{nullptr};
+        motor_base_t *wheel[4]{nullptr};
+    };
+
+    struct pid_cfg_t
+    {
+        pid_t *rud_pos_pid[4]{nullptr};
+        pid_t *rud_spd_pid[4]{nullptr};
+        pid_t *wheel_pid[4]{nullptr};
+        pid_t *follow_yaw_pid{nullptr};
+    };
+
+    motor_cfg_t motor;
+    pid_cfg_t pid;
+    float rud_pos_moving_offset[4]{};
 };
 
 // 继承模板基类，传入具体的命令类型
-class rud_chassis_t final : public chassis_base_t<cmd_rud_t>
+class rud_chassis_t final
+    : public module_base_t<rud_chassis_t, rud_cmd_t, rud_cfg_t>
 {
+    friend class module_base_t;
+    friend class chassis_base_t;
+    friend class vofa_drv_t;
+
+    struct motor_ctx_t;
+    struct pid_ctx_t;
+    struct data_ctx_t;
+    struct rud_ctx_t;
+
   public:
-    rud_chassis_t();
-    ~rud_chassis_t() override;
-
-  protected:
-    // =========================================================
-    // FSM 定义区域
-    // =========================================================
-
-    // 定义上下文类型别名，方便书写
-    // 注意：这里是对象类型，不是指针！
-    using Context = chassis_base_t<cmd_rud_t>;
-
-    // 前向声明状态类
-
-
-    // 1. 定义具体的 FSM
-    // 继承时传入 Context (对象类型)，FSM 库内部会自动处理成 Context*
-    class rud_fsm_t : public base_fsm_t<Context>
-    {
-        class active_state_t : public fsm_t<Context>
-        {
-        public:
-            void on_enter(Context *owner) override;
-            void on_execute(Context *owner) override;
-            void on_exit(Context *owner) override;
-        };
-        class passive_state_t : public fsm_t<Context>
-        {
-        public:
-            void on_enter(Context *ctx) override;
-            void on_execute(Context *ctx) override;
-            void on_exit(Context *ctx) override;
-        };
-    public:
-        void on_enter(Context *ctx) override;
-    };
-
-    // 2. 定义 "主动控制" 状态 (Active)
-
-
-    // 3. 定义 "被动/失能" 状态 (Passive)
-
-
-    // =========================================================
-    // 业务接口实现 (Override from chassis_base_t)
-    // =========================================================
-    void init() override;
-    void update_command() override;   // 命令预处理
-    void update_feedback() override;  // 反馈更新
-
-    // 以下函数主要由 FSM 调用
-    void kinematics_solve() override;   // 运动解算
-    void chassis_control() override;    // 闭环控制
-    void power_control() override;      // 功率限制
-    void send_motor_command() override; // 发送指令
-
-    // 辅助函数：全零输出
-    void stop_output();
+    rud_chassis_t(const rud_chassis_t &)            = delete;
+    rud_chassis_t &operator=(const rud_chassis_t &) = delete;
 
   private:
-    // 资源句柄
-    rudder_kin_t::rudder_states_t _target_states{};
-    rudder_kin_t::rudder_states_t _current_states{};
-    rudder_kin_t *_kinematics{};
+    rud_chassis_t();
+    ~rud_chassis_t() override = default;
 
-    float _wheel_output[4]{};         // 轮毂电机力矩输出
-    float _rudder_target_speed[4]{};  // 舵向速度目标
-    float _rudder_current_speed[4]{}; // 舵向速度反馈
-    float _rudder_output[4]{};        // 舵向电机力矩输出
+    // --- 基类接口 ---
+    void _init() override;
+    void _update_feedback() override;
+    void _fsm_execute() override;
 
-    // 舵角零点偏移
-    float _rudder_offset[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    // --- 派生方法 ---
+    void _kinematics_solve();
+    static void _chassis_control(rud_ctx_t *ctx);
+    static void _send_motor_command(rud_ctx_t *ctx);
 
-    motor_base_t *_wheel_motor[4]{};  // FL, FR, BL, BR
-    motor_base_t *_rudder_motor[4]{}; // Rudder Motors
+    rudder_kin_t *_kinematics{nullptr};
 
-    pid_t *_wheel_speed_pid[4]{};
-    pid_t *_rudder_angle_pid[4]{};
-    pid_t *_rudder_speed_pid[4]{};
-    pid_t *_follow_angle_pid{};
+    struct data_ctx_t
+    {
+        rudder_kin_t::rudder_states_t current_states{};
+        rudder_kin_t::rudder_states_t target_states{};
 
-    // 声明友元，允许状态机访问私有成员
-    friend class active_state_t;
-    friend class passive_state_t;
+        float current_rud_radps[4];
+
+        float out_rud_torque[4]{};
+        float out_wheel_torque[4]{};
+    };
+
+    struct hardware_ctx_t
+    {
+        powermeter_drv_t *power_meter{nullptr};
+    };
+
+    struct power_ctx_t
+    {
+        powermeter_data *data{nullptr};
+    };
+
+    enum class drive_mode_t
+    {
+        MOVING,  // Normal driving mode
+        BRAKING, // Braking mode (Stopping)
+        TURNING,
+    };
+
+    struct rud_ctx_t
+    {
+        rud_cfg_t rud_config;
+        hardware_ctx_t hardware;
+        power_ctx_t power;
+        data_ctx_t data;
+        rud_cmd_t *cmd;
+        drive_mode_t drive_mode;
+    };
+
+    struct debug_ctx_t
+    {
+        float debug_rud_torque[4]{};
+    };
+
+    rud_ctx_t _ctx;
+    debug_ctx_t debug_data;
+
+    using owner = rud_chassis_t;
+
+    struct state_passive_t : public state_t<owner>
+    {
+        void enter(owner *owner) override;
+        void execute(owner *owner) override;
+        void exit(owner *owner) override;
+    };
+
+    struct fsm_active_t : public fsm_t<owner>
+    {
+        // 子状态
+        struct state_moving_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        struct state_braking_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        struct state_turning_t : public state_t<owner>
+        {
+            void enter(owner *owner) override;
+            void execute(owner *owner) override;
+            void exit(owner *owner) override;
+        };
+
+        void on_enter(owner *owner) override;
+        void on_execute(owner *owner) override;
+        void on_exit(owner *owner) override;
+
+      private:
+        state_moving_t _moving_state;
+        state_braking_t _braking_state;
+        state_turning_t _turning_state;
+    };
+
+    state_passive_t _state_passive;
+    fsm_active_t _state_active;
+    fsm_t<owner> _main_fsm;
+
+    static constexpr float RUD_RADIUS         = 0.060f;
+    static constexpr uint8_t POWERCONTROL_NUM = 4;
+    static constexpr uint8_t POWER_LIMIT      = 80;
 };
+
 
 } // namespace pyro
 #endif

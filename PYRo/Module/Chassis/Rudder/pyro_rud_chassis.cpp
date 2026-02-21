@@ -1,204 +1,194 @@
-// #include "pyro_rud_chassis.h"
-// #include "pyro_dji_motor_drv.h"
-// #include <cmath> // for abs
-//
-// namespace pyro
+#include "pyro_rud_chassis.h"
+
+namespace pyro
+{
+/**********************************************************************/
+float cspeed[4]{};
+float tspeed[4]{};
+float ctorque[4]{};
+/**********************************************************************/
+// static float _mps_to_rpm(const float mps, const float radius)
 // {
-//
-// // =========================================================
-// // 构造与析构
-// // =========================================================
-//
-// rud_chassis_t::rud_chassis_t()
-//     : chassis_base_t("rudder") // 调用基类构造
-// {
-//     // 【关键】实例化 FSM 对象，并赋值给基类的 _fsm 指针
-//     // 注意：基类析构函数负责 delete 这个指针
-//     _fsm = new rud_fsm_t();
+//     // v = w * r  -> w = v / r
+//     // RPM = w * 60 / 2pi
+//     if (radius < 1e-4f)
+//         return 0.0f;
+//     return (mps / radius) * 9.5492966f;
 // }
 //
-// rud_chassis_t::~rud_chassis_t()
+// static float _radps_to_rpm(const float radps)
 // {
-//     delete _kinematics;
-//     for (int i = 0; i < 4; ++i)
-//     {
-//         delete _wheel_motor[i];
-//         delete _rudder_motor[i];
-//         delete _wheel_speed_pid[i];
-//         delete _rudder_angle_pid[i];
-//         delete _rudder_speed_pid[i];
-//     }
-//     delete _follow_angle_pid;
-//     // _fsm 由 chassis_base_t::~chassis_base_t() 释放，此处无需 delete
+//     // RPM = (w * 60) / (2 * pi)
+//     return radps * 9.5492966f;
 // }
-//
-// // =========================================================
-// // FSM 状态机逻辑实现
-// // =========================================================
-//
-// // FSM 入口：决定初始状态
-// void rud_chassis_t::rud_fsm_t::on_enter(Context *ctx)
-// {
-//     // 使用静态局部变量避免频繁 new/delete
-//     static passive_state_t passive;
-//     static active_state_t active;
-//
-//     // 默认进入被动状态，或者根据 ctx 内的标志位决定
-//     change_state(&passive);
-//
-//     // 如果你想一启动就运行，也可以 change_state(&active);
-//     // 或者可以通过检测遥控器开关来决定切换逻辑
-//     // (这通常在 on_execute 中实现)
-// }
-//
-// // --- Passive State (失能) ---
-// void rud_chassis_t::passive_state_t::enter(Context *ctx)
-// {
-//     // 可以在这里重置 PID 积分项
-// }
-//
-// void rud_chassis_t::passive_state_t::execute(Context *ctx)
-// {
-//     auto self = static_cast<rud_chassis_t*>(ctx);
-//
-//     // 即使在失能状态，也要更新反馈（为了显示UI或监控）
-//     self->update_feedback();
-//     self->stop_output(); // 发送零力矩
-//
-//     // 示例：状态切换逻辑
-//     // if (self->_cmd.enable_flag) {
-//     //     static active_state_t active;
-//     //     request_switch(&active);
-//     // }
-// }
-//
-// void rud_chassis_t::passive_state_t::exit(Context *ctx) {}
-//
-// // --- Active State (使能) ---
-// void rud_chassis_t::active_state_t::enter(Context *ctx) {}
-//
-// void rud_chassis_t::active_state_t::execute(Context *ctx)
-// {
-//     // 强转回派生类指针以访问私有成员和具体实现
-//     auto self = static_cast<rud_chassis_t*>(ctx);
-//
-//     // 标准控制流
-//     self->update_feedback();    // 1. 获取传感器数据
-//     self->kinematics_solve();   // 2. 解算目标状态
-//     self->chassis_control();    // 3. 计算 PID
-//     self->power_control();      // 4. 功率限制
-//     self->send_motor_command(); // 5. 发送 CAN
-// }
-//
-// void rud_chassis_t::active_state_t::exit(Context *ctx)
-// {
-//     auto self = static_cast<rud_chassis_t*>(ctx);
-//     self->stop_output(); // 退出运行状态时确保安全
-// }
-//
-// // =========================================================
-// // 业务逻辑实现 (Business Logic)
-// // =========================================================
-//
-// void rud_chassis_t::init()
-// {
-//     _kinematics = new rudder_kin_t(0.35f, 0.35f);
-//
-//     // 电机初始化 (ID与CAN总线配置)
-//     _wheel_motor[0]  = new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_1, can_hub_t::can1);
-//     _wheel_motor[1]  = new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_2, can_hub_t::can1);
-//     _wheel_motor[2]  = new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_3, can_hub_t::can1);
-//     _wheel_motor[3]  = new dji_m3508_motor_drv_t(dji_motor_tx_frame_t::id_4, can_hub_t::can1);
-//
-//     _rudder_motor[0] = new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_1, can_hub_t::can2);
-//     _rudder_motor[1] = new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_2, can_hub_t::can2);
-//     _rudder_motor[2] = new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_3, can_hub_t::can2);
-//     _rudder_motor[3] = new dji_gm_6020_motor_drv_t(dji_motor_tx_frame_t::id_4, can_hub_t::can2);
-//
-//     // PID 初始化 (参数需根据实际调整)
-//     for(int i=0; i<4; i++) {
-//         _wheel_speed_pid[i]  = new pid_t(18.0f, 0.0f, 0.0f, 1.0f, 20.0f);
-//         _rudder_angle_pid[i] = new pid_t(18.0f, 0.0f, 0.0f, 0.5f, 10.0f);
-//         _rudder_speed_pid[i] = new pid_t(8.0f, 0.0f, 0.0f, 0.5f, 3.0f);
-//     }
-//     _follow_angle_pid = new pid_t(10.0f, 0.0f, 0.0f, 1.0f, 5.0f);
-// }
-//
-// void rud_chassis_t::update_command()
-// {
-//     // 基类已经自动加锁并将 cmd 复制到 _cmd
-//     // 这里可以进行死区处理或数据清洗
-//     if (std::abs(_cmd.vx) < 0.01f) _cmd.vx = 0;
-//     if (std::abs(_cmd.vy) < 0.01f) _cmd.vy = 0;
-//     if (std::abs(_cmd.wz) < 0.01f) _cmd.wz = 0;
-// }
-//
-// void rud_chassis_t::update_feedback()
-// {
-//     for (int i = 0; i < 4; ++i)
-//     {
-//         _wheel_motor[i]->update_feedback();
-//         _rudder_motor[i]->update_feedback();
-//
-//         // 转换数据格式供 kinematics 使用
-//         _current_states.modules[i].speed = _wheel_motor[i]->get_current_rotate() * dji_m3508_motor_drv_t::reciprocal_reduction_ratio;
-//
-//         _current_states.modules[i].angle = _rudder_motor[i]->get_current_position() - _rudder_offset[i];
-//
-//         _rudder_current_speed[i] = _rudder_motor[i]->get_current_rotate();
-//     }
-// }
-//
-// void rud_chassis_t::kinematics_solve()
-// {
-//     // 随动 PID 计算 (可选)
-//     // if (_cmd.mode == FOLLOW && _cmd.yaw_err != 0) {
-//     //     _cmd.wz = _follow_angle_pid->calculate(0, _cmd.yaw_err);
-//     // }
-//
-//     // 使用基类的 _cmd 进行解算
-//     _target_states = _kinematics->solve(_cmd.vx, _cmd.vy, _cmd.wz, _current_states);
-// }
-//
-// void rud_chassis_t::chassis_control()
-// {
-//     for (int i = 0; i < 4; ++i)
-//     {
-//         // 轮子速度闭环
-//         _wheel_output[i] = _wheel_speed_pid[i]->calculate(
-//             _target_states.modules[i].speed, _current_states.modules[i].speed);
-//
-//         // 舵向角度串级闭环 (角度环 -> 速度环)
-//         _rudder_target_speed[i] = _rudder_angle_pid[i]->calculate(
-//             _target_states.modules[i].angle, _current_states.modules[i].angle);
-//
-//         _rudder_output[i] = _rudder_speed_pid[i]->calculate(
-//             _rudder_target_speed[i], _rudder_current_speed[i]);
-//     }
-// }
-//
-// void rud_chassis_t::power_control()
-// {
-//     // 这里预留给功率控制逻辑
-//     // 例如：如果总功率超限，按比例衰减 _wheel_output
-// }
-//
-// void rud_chassis_t::send_motor_command()
-// {
-//     for (int i = 0; i < 4; ++i)
-//     {
-//         _wheel_motor[i]->send_torque(_wheel_output[i]);
-//         _rudder_motor[i]->send_torque(_rudder_output[i]);
-//     }
-// }
-//
-// void rud_chassis_t::stop_output()
-// {
-//     for (int i = 0; i < 4; ++i)
-//     {
-//         _wheel_motor[i]->send_torque(0);
-//         _rudder_motor[i]->send_torque(0);
-//     }
-// }
-//
-// } // namespace pyro
+
+rud_chassis_t::rud_chassis_t()
+    : module_base_t("rudder", 512, 512, task_base_t::priority_t::HIGH)
+{
+    _ctx.data  = {};
+    debug_data = {};
+}
+
+void rud_chassis_t::_init()
+{
+    _kinematics                             = new rudder_kin_t(0.36f, 0.36f);
+    _ctx.rud_config                         = _config;
+    _ctx.hardware.power_meter = new powermeter_drv_t(0x212, can_hub_t::can2);
+    _ctx.power.data           = new powermeter_data();
+}
+
+void rud_chassis_t::_update_feedback()
+{
+    _ctx.rud_config.motor.rudder[0]->update_feedback();
+    _ctx.rud_config.motor.rudder[1]->update_feedback();
+    _ctx.rud_config.motor.rudder[2]->update_feedback();
+    _ctx.rud_config.motor.rudder[3]->update_feedback();
+    _ctx.rud_config.motor.wheel[0]->update_feedback();
+    _ctx.rud_config.motor.wheel[1]->update_feedback();
+    _ctx.rud_config.motor.wheel[2]->update_feedback();
+    _ctx.rud_config.motor.wheel[3]->update_feedback();
+
+    // 1. 四个舵机的角度和角速度
+    // 舵机当前角度（-PI ~ PI）
+    _ctx.data.current_states.modules[rudder_kin_t::FL].angle =
+        _ctx.rud_config.motor.rudder[0]->get_current_position() -
+        _ctx.rud_config.rud_pos_moving_offset[0];
+    _ctx.data.current_states.modules[rudder_kin_t::FR].angle =
+        _ctx.rud_config.motor.rudder[1]->get_current_position() -
+        _ctx.rud_config.rud_pos_moving_offset[1];
+    _ctx.data.current_states.modules[rudder_kin_t::BL].angle =
+        _ctx.rud_config.motor.rudder[2]->get_current_position() -
+        _ctx.rud_config.rud_pos_moving_offset[2];
+    _ctx.data.current_states.modules[rudder_kin_t::BR].angle =
+        _ctx.rud_config.motor.rudder[3]->get_current_position() -
+        _ctx.rud_config.rud_pos_moving_offset[3];
+    for (int i = 0; i < 4; i++)
+    {
+        if (_ctx.data.current_states.modules[i].angle > PI)
+            _ctx.data.current_states.modules[i].angle -= 2 * PI;
+        else if (_ctx.data.current_states.modules[i].angle < -PI)
+            _ctx.data.current_states.modules[i].angle += 2 * PI;
+    }
+    // 舵机当前角速度
+    _ctx.data.current_rud_radps[0] =
+        _ctx.rud_config.motor.rudder[0]->get_current_rotate();
+    _ctx.data.current_rud_radps[1] =
+        _ctx.rud_config.motor.rudder[1]->get_current_rotate();
+    _ctx.data.current_rud_radps[2] =
+        _ctx.rud_config.motor.rudder[2]->get_current_rotate();
+    _ctx.data.current_rud_radps[3] =
+        _ctx.rud_config.motor.rudder[3]->get_current_rotate();
+
+    // 2. 四个轮子的 RPM
+    _ctx.data.current_states.modules[rudder_kin_t::FL].speed =
+        _ctx.rud_config.motor.wheel[0]->get_current_rotate() *
+        dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
+
+    _ctx.data.current_states.modules[rudder_kin_t::FR].speed =
+        _ctx.rud_config.motor.wheel[1]->get_current_rotate() *
+        dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
+
+    _ctx.data.current_states.modules[rudder_kin_t::BL].speed =
+        _ctx.rud_config.motor.wheel[2]->get_current_rotate() *
+        dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
+
+    _ctx.data.current_states.modules[rudder_kin_t::BR].speed =
+        _ctx.rud_config.motor.wheel[3]->get_current_rotate() *
+        dji_m3508_motor_drv_t::reciprocal_reduction_ratio * RUD_RADIUS;
+}
+
+void rud_chassis_t::_kinematics_solve()
+{
+    if (_ctx.cmd->follow_yaw == true)
+    {
+        _ctx.cmd->wz = _ctx.rud_config.pid.follow_yaw_pid->calculate(
+            0, _ctx.cmd->yaw_error);
+    }
+    _ctx.data.target_states = _kinematics->solve(
+        _ctx.cmd->vx, _ctx.cmd->vy, _ctx.cmd->wz, _ctx.data.current_states);
+}
+
+void rud_chassis_t::_chassis_control(rud_ctx_t *ctx)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        // 舵机位置环
+
+        const float rud_pos_output =
+            ctx->rud_config.pid.rud_pos_pid[i]->calculate(
+                ctx->data.target_states.modules[i].angle,
+                ctx->data.current_states.modules[i].angle);
+
+        // 舵机速度环
+        ctx->data.out_rud_torque[i] =
+            ctx->rud_config.pid.rud_spd_pid[i]->calculate(
+                rud_pos_output, ctx->data.current_rud_radps[i]);
+
+        // 轮子速度环
+        ctx->data.out_wheel_torque[i] =
+            ctx->rud_config.pid.wheel_pid[i]->calculate(
+                ctx->data.target_states.modules[i].speed,
+                ctx->data.current_states.modules[i].speed);
+        cspeed[i] = ctx->data.current_states.modules[i].speed;
+        tspeed[i] = ctx->data.target_states.modules[i].speed;
+    }
+
+#if POWER_CONTROL_USE
+    std::vector<power_control_drv_t::motor_data_t> motor_data;
+
+    power_control_drv_t &power_controller = power_control_drv_t::get_instance();
+    for (int i = 0; i < POWERCONTROL_NUM; i++)
+    {
+        motor_data.at(i).gyro       = ctx->data.current_states.modules[i].angle;
+        motor_data.at(i).torque_cmd = ctx->data.out_wheel_torque[i];
+        motor_data.at(i).power_predict = power_controller.motor_power_predict(
+            i, motor_data.at(i).torque_cmd, motor_data.at(i).gyro);
+    }
+    // 不平均分配
+    float custom_ratios[POWERCONTROL_NUM] = {0.1f, 0.1f, 0.1f, 0.1f};
+    power_controller.calculate_restricted_torques(
+        motor_data.data(), POWERCONTROL_NUM, POWER_LIMIT, custom_ratios);
+
+    // 平均分配
+    power_controller.calculate_restricted_torques(
+        motor_data.data(), POWERCONTROL_NUM, POWER_LIMIT);
+    for (int i = 0; i < POWERCONTROL_NUM; i++)
+    {
+        ctx->data.out_wheel_torque[i] = motor_data.at(i).restricted_torque;
+    }
+
+
+#endif
+}
+
+void rud_chassis_t::_send_motor_command(rud_ctx_t *ctx)
+{
+    // 发送舵机扭矩命令
+    for (int i = 0; i < 4; i++)
+    {
+        ctx->rud_config.motor.rudder[i]->send_torque(
+            ctx->data.out_rud_torque[i]);
+    }
+
+    // 发送轮子扭矩命令
+    for (int i = 0; i < 4; i++)
+    {
+        ctorque[i] = ctx->data.out_wheel_torque[i];
+        ctx->rud_config.motor.wheel[i]->send_torque(
+            ctx->data.out_wheel_torque[i]);
+    }
+}
+
+void rud_chassis_t::_fsm_execute()
+{
+    _ctx.cmd = &_current_cmd;
+
+    if (cmd_base_t::mode_t::ZERO_FORCE == _ctx.cmd->mode)
+        _main_fsm.change_state(&_state_passive);
+    else if (cmd_base_t::mode_t::ACTIVE == _ctx.cmd->mode)
+        _main_fsm.change_state(&_state_active);
+
+    _main_fsm.execute(this);
+}
+
+} // namespace pyro
