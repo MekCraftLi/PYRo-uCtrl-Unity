@@ -6,7 +6,7 @@
  * This file contains the implementation of the `pyro::module_base_t` template
  * class. It handles the low-level details of command double-buffering,
  * thread-safe mutex locking, and the internal task loop execution logic.
- * 本文件包含了 `pyro::module_base_t` 模板类的实现。它处理命令双缓冲、
+ * 本文件包含了 `pyro::module_base_t` 模板类的实现。它处理命令环形缓冲区
  * 线程安全互斥锁以及内部任务循环执行逻辑的底层细节。
  *
  * @author Lucky
@@ -19,16 +19,16 @@
 namespace pyro
 {
 
-template <typename Derived, typename CmdType, typename CfgData>
-module_base_t<Derived, CmdType, CfgData>::module_base_t(
+template <typename Derived, typename CmdType, typename ModuleDeps>
+module_base_t<Derived, CmdType, ModuleDeps>::module_base_t(
     const char *name, uint16_t init_stack, uint16_t loop_stack,
     task_base_t::priority_t priority)
     : _task(this, name, init_stack, loop_stack, priority)
 {
 }
 
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::start()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::start()
 {
     _task.start();
 }
@@ -37,8 +37,8 @@ void module_base_t<Derived, CmdType, CfgData>::start()
  * @brief 写入命令到环形缓冲区 (生产者)
  * 注意：如果缓冲区已满，新命令将被丢弃（防止覆盖未执行的旧轨迹）
  */
-template <typename Derived, typename CmdType, typename CfgData>
-bool module_base_t<Derived, CmdType, CfgData>::set_command(
+template <typename Derived, typename CmdType, typename ModuleDeps>
+bool module_base_t<Derived, CmdType, ModuleDeps>::set_command(
     const CmdType &cmd)
 {
     scoped_mutex_t lock(_mutex);
@@ -56,11 +56,11 @@ bool module_base_t<Derived, CmdType, CfgData>::set_command(
  * @brief 设置模块配置 (在 start 前调用)
  * 注意：配置数据通常在模块启动前设置，且不应频繁更改。
  */
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::set_config(
-    const CfgData &cfg)
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::configure(
+    const ModuleDeps &deps)
 {
-    _config_data = cfg;
+    _module_deps = deps;
 }
 
 
@@ -68,8 +68,8 @@ void module_base_t<Derived, CmdType, CfgData>::set_config(
  * @brief 从环形缓冲区更新命令 (消费者)
  * 注意：如果缓冲区为空，_current_cmd 保持上一次的值不变 (Zero-Order Hold)
  */
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::_update_command()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::_update_command()
 {
     scoped_mutex_t lock(_mutex);
     if (_head != _tail)
@@ -79,8 +79,8 @@ void module_base_t<Derived, CmdType, CfgData>::_update_command()
     }
 }
 
-template <typename Derived, typename CmdType, typename CfgData>
-mutex_t &module_base_t<Derived, CmdType, CfgData>::get_mutex()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+mutex_t &module_base_t<Derived, CmdType, ModuleDeps>::get_mutex()
 {
     return _mutex;
 }
@@ -89,8 +89,8 @@ mutex_t &module_base_t<Derived, CmdType, CfgData>::get_mutex()
  * @brief Core loop invoking virtual callbacks.
  * 调用虚函数回调的核心循环。
  */
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::_run_loop_impl()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::_run_loop_impl()
 {
     TickType_t xLastWakeTime        = xTaskGetTickCount();
     constexpr TickType_t xFrequency = pdMS_TO_TICKS(1);
@@ -106,8 +106,8 @@ void module_base_t<Derived, CmdType, CfgData>::_run_loop_impl()
 
 /* Internal Task Proxy Implementations --------------------------------------*/
 
-template <typename Derived, typename CmdType, typename CfgData>
-module_base_t<Derived, CmdType, CfgData>::module_task_t::module_task_t(
+template <typename Derived, typename CmdType, typename ModuleDeps>
+module_base_t<Derived, CmdType, ModuleDeps>::module_task_t::module_task_t(
     module_base_t *owner_ptr, const char *name, const uint16_t init_stack,
     const uint16_t loop_stack, const priority_t priority)
     : task_base_t(name, init_stack, loop_stack, priority), _owner(owner_ptr)
@@ -118,8 +118,8 @@ module_base_t<Derived, CmdType, CfgData>::module_task_t::module_task_t(
  * @brief Invokes the initialization function of the module instance.
  * 调用模块实例的初始化函数。
  */
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::module_task_t::init()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::module_task_t::init()
 {
     if (_owner)
         _owner->_init();
@@ -129,8 +129,8 @@ void module_base_t<Derived, CmdType, CfgData>::module_task_t::init()
  * @brief Invokes the core loop implementation of the module instance.
  * 调用模块实例的核心循环实现。
  */
-template <typename Derived, typename CmdType, typename CfgData>
-void module_base_t<Derived, CmdType, CfgData>::module_task_t::run_loop()
+template <typename Derived, typename CmdType, typename ModuleDeps>
+void module_base_t<Derived, CmdType, ModuleDeps>::module_task_t::run_loop()
 {
     if (_owner)
         _owner->_run_loop_impl();

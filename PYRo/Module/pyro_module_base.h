@@ -50,7 +50,7 @@ struct cmd_base_t
  * @brief CRTP Template for Module Base.
  * 模块基类的 CRTP 模板。
  */
-template <typename Derived, typename CmdType, typename CfgData>
+template <typename Derived, typename CmdType, typename ModuleDeps>
 class module_base_t
 {
   public:
@@ -74,7 +74,7 @@ class module_base_t
      * @brief Sets the configuration for the module. Thread-safe.
      * 设置模块配置,在start前调用，
      */
-    void set_config(const CfgData &cfg);
+    void configure(const ModuleDeps &deps);
 
 
     [[nodiscard]] mutex_t &get_mutex();
@@ -98,7 +98,7 @@ class module_base_t
 
     CmdType _current_cmd;
 
-    CfgData _config_data;
+    ModuleDeps _module_deps;
 
   private:
     class module_task_t final : public task_base_t

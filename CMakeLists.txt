@@ -133,25 +133,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Application/Mission/pyro_init_thread.cpp
         PYRo/Application/Mission/pyro_mission_planer.cpp
 
-        # --- Moudule ---
-
-        ## --- Chassis ---
-        PYRo/Module/Chassis/Mecanum/pyro_mec_chassis.cpp
-        PYRo/Module/Chassis/Mecanum/fsm/pyro_mec_passive_state.cpp
-        PYRo/Module/Chassis/Mecanum/fsm/pyro_mec_active_state.cpp
-
-        ## --- Gimbal ---
-        PYRo/Module/Gimbal/Hero/Direct/pyro_direct_gimbal.cpp
-        PYRo/Module/Gimbal/Hero/Direct/fsm/pyro_direct_active_state.cpp
-        PYRo/Module/Gimbal/Hero/Direct/fsm/pyro_direct_passive_state.cpp
-
-        ## --- Booster ---
-        PYRo/Module/Booster/Quad/pyro_quad_booster.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_passive_state.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_active_state.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_homing_state.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_ready_state.cpp
-
         # --- Debug ---
         PYRo/Debug/Debug_task.cpp
         PYRo/Debug/JCOM/pyro_jcom.cpp
@@ -169,16 +150,32 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_moving_state.cpp
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_braking_state.cpp
         PYRo/Module/Chassis/Rudder/fsm/pyro_rud_turning_state.cpp
-        PYRo/Application/Mission/Hero/pyro_chassis_app.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_stall_state.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_interim_state.cpp
-        PYRo/Module/Booster/Quad/fsm/pyro_quad_busy_state.cpp
+
+
 )
 if (ROBOT_ID EQUAL HERO_ID)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+
+        PYRo/Module/Booster/Quad/pyro_quad_booster.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_passive_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_active_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_homing_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_ready_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_stall_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_interim_state.cpp
+        PYRo/Module/Booster/Quad/fsm/pyro_quad_busy_state.cpp
+
+        PYRo/Module/Gimbal/Hero/Direct/pyro_direct_gimbal.cpp
+        PYRo/Module/Gimbal/Hero/Direct/fsm/pyro_direct_active_state.cpp
+        PYRo/Module/Gimbal/Hero/Direct/fsm/pyro_direct_passive_state.cpp
+
+        PYRo/Module/Chassis/Mecanum/pyro_mec_chassis.cpp
+        PYRo/Module/Chassis/Mecanum/fsm/pyro_mec_passive_state.cpp
+        PYRo/Module/Chassis/Mecanum/fsm/pyro_mec_active_state.cpp
+
+        PYRo/Application/Mission/Hero/pyro_chassis_app.cpp
         PYRo/Application/Mission/Hero/pyro_gimbal_app.cpp
         PYRo/Application/Mission/Hero/pyro_booster_app.cpp
-        PYRo/Application/Mission/Hero/pyro_chassis_app.cpp
     )
 elseif (ROBOT_ID EQUAL 10)
 
