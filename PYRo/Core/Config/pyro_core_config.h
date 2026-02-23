@@ -46,6 +46,12 @@
 
 #define BOARD_ID   CHASSIS_ID
 #endif
+#if (ROBOT_ID == HERO_ID) || (ROBOT_ID == SUB_HERO_ID)
+#define GIMBAL_ID  1
+#define CHASSIS_ID 2
+
+#define BOARD_ID   CHASSIS_ID
+#endif
 
 #define PYRO_UART1 1
 #define PYRO_UART5 2
