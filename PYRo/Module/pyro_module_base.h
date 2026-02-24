@@ -61,7 +61,7 @@ class module_base_t
     }
 
     void configure(const ConfigData &config);
-    void start();
+    status_t start();
     bool set_command(const CmdType &cmd);
     [[nodiscard]] mutex_t &get_mutex();
 

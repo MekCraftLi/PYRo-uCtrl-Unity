@@ -119,7 +119,7 @@ status_t module_base_t<Derived, CmdType, ConfigData>::module_task_t::init()
 {
     if (_owner)
        return _owner->_init();
-    return status_t::ERROR;
+    return status_t::PYRO_ERROR;
 }
 
 /**
