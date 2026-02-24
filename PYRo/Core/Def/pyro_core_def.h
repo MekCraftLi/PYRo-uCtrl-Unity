@@ -14,7 +14,8 @@ enum status_t
     PYRO_NO_MEMORY   = 0X04,
     PYRO_PARAM_ERROR = 0X05,
     PYRO_NOT_FOUND   = 0X06,
-    PYRO_WARNING     = 0X07
+    PYRO_WARNING     = 0X07,
+    PYRO_ALREADY_INIT = 0X08,
 };
 
 constexpr float PI = 3.14159265358979323846f;
@@ -32,6 +33,7 @@ constexpr float PI = 3.14159265358979323846f;
                                   {                           \
                                     return ret;               \
                                   }
+
 #define CHECK_ARM_MATH_RET(ret)  if(ARM_MATH_SUCCESS != ret)  \
                                   {                           \
                                     return PYRO_ERROR;        \

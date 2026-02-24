@@ -83,6 +83,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         PYRo/Algorithm/Kinematics/pyro_kin_hybrid.cpp
         PYRo/Algorithm/Kinematics/pyro_kin_mec.cpp
         PYRo/Algorithm/Kinematics/pyro_kin_rudder.cpp
+        PYRo/Algorithm/Kinematics/pyro_kin_wl.cpp
         PYRo/Algorithm/OLS/pyro_algo_ols.cpp
         PYRo/Algorithm/PID/pyro_algo_pid.cpp
         PYRo/Algorithm/EKF/QuaternionEKF.cpp
@@ -139,7 +140,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         #        PYRo/Application/Mission/Hero/pyro_booster_app.cpp
 
 
-        # --- Moudule ---
+        # --- Module ---
+        PYRo/Module/pyro_module_base.tpp
 
         ## --- Chassis ---
         #        PYRo/Module/Chassis/Mecanum/pyro_mec_chassis.cpp
