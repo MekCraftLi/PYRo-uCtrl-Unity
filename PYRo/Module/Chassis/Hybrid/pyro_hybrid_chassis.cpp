@@ -39,7 +39,13 @@ void hybrid_chassis_t::_update_feedback()
                                           &_ctx.data.current_pitch_rad,
                                           &_ctx.data.current_roll_rad);
 
-    // 3. 转换并记录转速与位置
+    // 3. 转换并记录电机转速与位置
+    float current_angle =
+        _ctx.motor.yaw->get_current_position() - YAW_OFFSET_RAD;
+    current_angle = loop_fp32_constrain(current_angle, -PI, PI);
+    _ctx.data.current_yaw_error =
+        loop_fp32_constrain(0 - current_angle, -PI, PI);
+
     for (int i = 0; i < 4; i++)
         _ctx.data.current_wheel_rpm[i] =
             radps_to_rpm(_ctx.motor.mecanum[i]->get_current_rotate());
@@ -61,8 +67,30 @@ void hybrid_chassis_t::_update_feedback()
 
 void hybrid_chassis_t::_kinematics_solve()
 {
-    const auto wheel_speeds = _kinematics->solve(
-        _ctx.cmd->vx, _ctx.cmd->vy, _ctx.cmd->wz, _ctx.cmd->track_en);
+    // -------------------------------------------------------------
+    // 1. 跟随 PID 计算 (算出底盘需要的自旋速度 wz)
+    // -------------------------------------------------------------
+    // Calculate(measurement, target) 或 (error, 0)
+    // 假设 pid_t::calculate(target, current)，我们将 error 作为 P项输入
+    const float follow_wz =
+        _ctx.pid.follow_pid->calculate(0.0f, _ctx.data.current_yaw_error);
+
+    // 最终角速度 = 跟随产生的角速度 + 选手手动输入的角速度(小陀螺/微调)
+    const float final_wz    = follow_wz + _ctx.cmd->wz;
+
+    // -------------------------------------------------------------
+    // 2. 矢量旋转 (将云台坐标系速度转换到底盘坐标系)
+    const float theta       = _ctx.data.current_yaw_error;
+
+    const float c_theta     = arm_cos_f32(theta);
+    const float s_theta     = arm_sin_f32(theta);
+
+    // 旋转矩阵公式 (逆时针旋转 theta)
+    const float vx_chassis  = _ctx.cmd->vx * c_theta + _ctx.cmd->vy * s_theta;
+    const float vy_chassis  = -_ctx.cmd->vx * s_theta + _ctx.cmd->vy * c_theta;
+
+    const auto wheel_speeds = _kinematics->solve(vx_chassis, vy_chassis,
+                                                 final_wz, _ctx.cmd->track_en);
 
     // 麦轮转速分配 (右侧反转视底层驱动而定，此处按常规处理)
     _ctx.data.target_wheel_rpm[0] =
@@ -99,7 +127,7 @@ void hybrid_chassis_t::_leg_control()
     const float sin_pitch = arm_sin_f32(pitch);
 
     // 1. 计算姿态维稳所需的宏观虚拟力
-    const float f_pitch   = _ctx.pid.pitch_pid->calculate(0.0f, pitch);
+    const float f_pitch   = _ctx.pid.pitch_pid->calculate(_ctx.data.target_pitch_rad, pitch);
     const float f_roll    = _ctx.pid.roll_pid->calculate(0.0f, roll);
 
     for (int i = 0; i < 2; i++)
@@ -124,7 +152,7 @@ void hybrid_chassis_t::_leg_control()
             (DIST_FRONT + DIST_HIP + x_b) * cos_pitch + y_wheel * sin_pitch;
 
         float f_gravity_ff = 0.0f;
-        if (fabsf(denominator) > 1e-4f) // 使用硬件 FPU 支持的 fabsf
+        if (fabsf(denominator) > 1e-4f)
         {
             f_gravity_ff = (MASS * GRAVITY * numerator) / denominator;
         }
@@ -143,14 +171,14 @@ void hybrid_chassis_t::_leg_control()
             tau_wall =
                 -LEG_K_WALL * (theta - (LEG_MAX_POS - LEG_POS_BUFFER_RAD)) -
                 LEG_D_WALL * theta_dot;
-            tau_wall = fminf(0.0f, tau_wall); // 使用硬件 FPU 的 fminf
+            tau_wall = fminf(0.0f, tau_wall);
         }
         else if (theta < LEG_MIN_POS + LEG_POS_BUFFER_RAD)
         {
             tau_wall =
                 LEG_K_WALL * ((LEG_MIN_POS + LEG_POS_BUFFER_RAD) - theta) -
                 LEG_D_WALL * theta_dot;
-            tau_wall = fmaxf(0.0f, tau_wall); // 使用硬件 FPU 的 fmaxf
+            tau_wall = fmaxf(0.0f, tau_wall);
         }
 
         // 7. 力矩饱和安全限制 (基于优先级的削峰逻辑)

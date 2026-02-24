@@ -18,6 +18,14 @@ void hybrid_chassis_t::fsm_active_t::on_enter(owner *owner)
 
 void hybrid_chassis_t::fsm_active_t::on_execute(owner *owner)
 {
+    if (owner->_ctx.cmd->track_en)
+    {
+        change_state(&climbing_state);
+    }
+    else
+    {
+        change_state(&cruising_state);
+    }
 
     owner->_kinematics_solve();
 }

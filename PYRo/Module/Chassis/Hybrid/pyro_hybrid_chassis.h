@@ -42,6 +42,7 @@ struct hybrid_deps_t
     struct pid_deps_t
     {
         pid_t *mecanum_pid[4]{nullptr};
+        pid_t *follow_pid{nullptr};
         pid_t *track_pid[2]{nullptr};
         pid_t *pitch_pid{nullptr};
         pid_t *roll_pid{nullptr};
@@ -93,10 +94,14 @@ class hybrid_chassis_t final
         float current_leg_rad[2]{};
         float current_leg_radps[2]{};
 
-        // 新增 IMU 姿态反馈
+        // IMU 姿态反馈
         float current_pitch_rad{0};
         float current_roll_rad{0};
         float current_yaw_rad{0};
+        float target_pitch_rad{0};
+
+        // YAW 电机差值反馈（用于底盘跟随云台）
+        float current_yaw_error{0};
 
         float target_wheel_rpm[4]{};
         float target_track_rpm[2]{};
@@ -151,6 +156,9 @@ class hybrid_chassis_t final
         void on_enter(owner *owner) override;
         void on_execute(owner *owner) override;
         void on_exit(owner *owner) override;
+    private:
+        cruising_state_t cruising_state;
+        climbing_state_t climbing_state;
     };
 
     // 状态实例

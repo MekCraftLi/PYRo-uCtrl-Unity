@@ -25,8 +25,8 @@ constexpr float JY_POLY_COEF[JY_POLY_DEGREE + 1] = {
     -0.0194, 0.1161,  -0.2662,
     0.3140,  -0.2409, 0.2048}; // JY多项式拟合系数，单位m/rad
 constexpr float XB_POLY_COEF[XB_POLY_DEGREE + 1] = {
-    0.0086, -0.0379, 0.0700, -0.0618,
-    0.0154, 0.0062,  0.0011}; // XB多项式拟合系数，单位m
+    -0.0086, 0.0379, -0.0700, 0.0618,
+    -0.0154, -0.0062,  -0.0011}; // XB多项式拟合系数，单位m
 constexpr float YB_POLY_COEF[YB_POLY_DEGREE + 1] = {
     -0.0056, 0.0311, -0.0793, 0.1957, 0.0745}; // YB多项式拟合系数，单位m
 constexpr float MASS         = 20.0f;          // 机器人质量 (kg)

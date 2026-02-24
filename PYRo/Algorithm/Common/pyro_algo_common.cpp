@@ -37,4 +37,16 @@ float mps_to_rpm(const float mps, const float radius)
     return (mps / radius) * 9.5492966f;
 }
 
+float loop_fp32_constrain(float val, const float min_val, const float max_val)
+{
+    const float len = max_val - min_val;
+    if (len < 1e-6f)
+        return val;
+    while (val > max_val)
+        val -= len;
+    while (val < min_val)
+        val += len;
+    return val;
+}
+
 } // namespace pyro
