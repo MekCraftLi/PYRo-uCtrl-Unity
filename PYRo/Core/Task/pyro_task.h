@@ -8,6 +8,7 @@
 #define __PYRO_TASK_H__
 
 #include "FreeRTOS.h"
+#include "pyro_core_def.h"
 #include "task.h"
 #include <cstdint>
 
@@ -52,14 +53,14 @@ class task_base_t
     virtual ~task_base_t();
 
     /** @brief Starts the task. 启动任务。 */
-    void start();
+    status_t start();
 
     /** @brief Stops the task. 停止任务。 */
     void stop();
 
   protected:
     /** @brief Initialization callback. 初始化回调。 */
-    virtual void init()     = 0;
+    virtual status_t init()     = 0;
 
     /** @brief Main loop callback. 主循环回调。 */
     virtual void run_loop() = 0;
@@ -74,7 +75,7 @@ class task_base_t
     priority_t _priority;
 
     /** @brief Entry point for init. 初始化入口。 */
-    static void init_entry_point(void *arg);
+    static status_t init_entry_point(void *arg);
 
     /** @brief Entry point for loop. 循环入口。 */
     static void loop_entry_point(void *arg);

@@ -20,6 +20,7 @@
 #ifndef __PYRO_MODULE_BASE_H__
 #define __PYRO_MODULE_BASE_H__
 
+#include "pyro_core_def.h"
 #include "pyro_core_fsm.h"
 #include "pyro_mutex.h"
 #include "pyro_task.h"
@@ -73,7 +74,7 @@ class module_base_t
     virtual ~module_base_t()        = default;
 
     /** @brief Callback for initialization. 初始化回调。 */
-    virtual void _init()            = 0;
+    virtual status_t _init()            = 0;
 
     /** @brief Callback for sensor updates. 反馈更新回调。 */
     virtual void _update_feedback() = 0;
@@ -94,7 +95,7 @@ class module_base_t
                       priority_t priority);
 
       protected:
-        void init() override;
+        status_t init() override;
         void run_loop() override;
 
       private:

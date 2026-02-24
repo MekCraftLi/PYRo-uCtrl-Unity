@@ -33,10 +33,7 @@ constexpr float PI = 3.14159265358979323846f;
                                   {                           \
                                     return ret;               \
                                   }
-#define CHECK_POINT_NULL(ptr)    if(nullptr == ptr)           \
-                                  {                           \
-                                    return PYRO_PARAM_ERROR;  \
-                                  }
+
 #define CHECK_ARM_MATH_RET(ret)  if(ARM_MATH_SUCCESS != ret)  \
                                   {                           \
                                     return PYRO_ERROR;        \
