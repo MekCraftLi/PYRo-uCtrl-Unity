@@ -253,25 +253,5 @@ void hybrid_chassis_t::_fsm_execute()
     _main_fsm.execute(this);
 }
 
-// --- 子状态占位 (巡航与爬坡) ---
-void hybrid_chassis_t::fsm_active_t::cruising_state_t::enter(owner *owner)
-{
-}
-void hybrid_chassis_t::fsm_active_t::cruising_state_t::execute(owner *owner)
-{
-}
-void hybrid_chassis_t::fsm_active_t::cruising_state_t::exit(owner *owner)
-{
-}
-
-void hybrid_chassis_t::fsm_active_t::climbing_state_t::enter(owner *owner)
-{
-}
-void hybrid_chassis_t::fsm_active_t::climbing_state_t::execute(owner *owner)
-{
-}
-void hybrid_chassis_t::fsm_active_t::climbing_state_t::exit(owner *owner)
-{
-}
 
 } // namespace pyro
