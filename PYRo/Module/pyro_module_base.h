@@ -21,6 +21,7 @@
 #ifndef __PYRO_MODULE_BASE_H__
 #define __PYRO_MODULE_BASE_H__
 
+#include "pyro_core_def.h"
 #include "pyro_core_fsm.h"
 #include "pyro_mutex.h"
 #include "pyro_task.h"
@@ -64,7 +65,7 @@ class module_base_t
      * @brief Starts the module task. Must be explicitly called.
      * 启动模块任务,需要显式调用
      */
-    void start();
+    status_t start();
     /*
      * @brief Sets the current command for the module. Thread-safe.
      * 设置模块当前命令,线程安全（内部环形缓冲区实现）
@@ -88,7 +89,7 @@ class module_base_t
     virtual ~module_base_t()        = default;
 
     /** @brief Callback for initialization. 初始化回调。 */
-    virtual void _init()            = 0;
+    virtual status_t _init()            = 0;
 
     /** @brief Callback for sensor updates. 反馈更新回调。 */
     virtual void _update_feedback() = 0;
@@ -109,7 +110,7 @@ class module_base_t
                       priority_t priority);
 
       protected:
-        void init() override;
+        status_t init() override;
         void run_loop() override;
 
       private:
@@ -121,7 +122,7 @@ class module_base_t
 
     module_task_t _task;
     mutex_t _mutex;
-
+    
     static constexpr uint8_t CMD_BUF_SIZE = 16; // 缓冲区大小，建议为 2 的幂
     CmdType _cmd_buffer[CMD_BUF_SIZE];
 
