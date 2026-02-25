@@ -77,7 +77,6 @@ extern "C"
 
     void hero_gimbal_thread(void *argument)
     {
-
         while (true)
         {
             chassis_rc2cmd(rc_ctrl_ptr);
