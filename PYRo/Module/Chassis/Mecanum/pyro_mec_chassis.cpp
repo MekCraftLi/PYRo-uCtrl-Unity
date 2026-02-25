@@ -237,14 +237,15 @@ void mec_chassis_t::_chassis_control(mec_context_t *ctx)
         ctx->data.out_wheel_torque[i] = ctx->pid.wheel_pid[i]->calculate(
             ctx->data.target_wheel_rpm[i], ctx->data.current_wheel_rpm[i]);
     }
-    _power_control();
+    // _power_control();
 }
 
 void mec_chassis_t::_send_motor_command(mec_context_t *ctx)
 {
     for (int i = 0; i < 4; i++)
     {
-        ctx->motor.wheels[i]->send_torque(ctx->data.out_wheel_torque[i]);
+        // ctx->motor.wheels[i]->send_torque(ctx->data.out_wheel_torque[i]);
+        ctx->motor.wheels[i]->send_torque(0);
     }
 }
 

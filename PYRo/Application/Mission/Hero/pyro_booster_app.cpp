@@ -53,7 +53,6 @@ extern "C"
 
     void hero_booster_thread(void *argument)
     {
-        quad_booster_ptr->start();
         while (true)
         {
             booster_rc2cmd(rc_ctrl_ptr);
@@ -68,6 +67,7 @@ extern "C"
         quad_booster_cmd_ptr = new pyro::quad_booster_cmd_t();
         rc_ctrl_ptr = static_cast<pyro::dr16_drv_t::dr16_ctrl_t const *>(
             pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16)->read());
+        quad_booster_ptr->start();
         xTaskCreate(hero_booster_thread, "start_app_thread", 128, nullptr,
                     configMAX_PRIORITIES - 1, nullptr);
         vTaskDelete(nullptr);
