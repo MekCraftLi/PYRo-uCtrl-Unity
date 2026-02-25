@@ -75,7 +75,7 @@ class task_base_t
     priority_t _priority;
 
     /** @brief Entry point for init. 初始化入口。 */
-    static status_t init_entry_point(void *arg);
+    static void init_entry_point(void *arg);
 
     /** @brief Entry point for loop. 循环入口。 */
     static void loop_entry_point(void *arg);
