@@ -74,7 +74,7 @@ class hybrid_chassis_t final
     ~hybrid_chassis_t() override = default;
 
     // --- 基类接口 ---
-    void _init() override;
+    status_t _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
 

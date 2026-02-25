@@ -45,7 +45,7 @@ class direct_gimbal_t final
     ~direct_gimbal_t() override = default;
 
     // --- 基类接口实现 ---
-    void _init() override;
+    status_t _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
 

@@ -12,7 +12,7 @@ quad_booster_t::quad_booster_t() : module_base_t("quad_booster")
     _ctx = {};
 }
 
-void quad_booster_t::_init()
+status_t quad_booster_t::_init()
 {
     // 1. 摩擦轮电机初始化
     _ctx.motor.fric_wheels[0] =
@@ -39,6 +39,8 @@ void quad_booster_t::_init()
         new pid_t(10.2f, 0.03f, 0.005f, 1.0f, 10.0f, 200, 100, 4);
     _ctx.pid.trigger_spd_pid =
         new pid_t(3.6f, 0.02f, 0.005f, 2.0f, 20.0f, 200, 100, 4);
+
+    return PYRO_OK;
 }
 
 void quad_booster_t::_update_feedback()

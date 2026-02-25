@@ -51,7 +51,7 @@ class mec_chassis_t final : public module_base_t<mec_chassis_t, mec_cmd_t,mec_cf
     ~mec_chassis_t() override = default;
 
     // --- 基类接口实现 ---
-    void _init() override;
+    status_t _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
 

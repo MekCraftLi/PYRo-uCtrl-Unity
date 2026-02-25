@@ -14,13 +14,15 @@ hybrid_chassis_t::hybrid_chassis_t() : module_base_t("hybrid")
     _ctx = {};
 }
 
-void hybrid_chassis_t::_init()
+status_t hybrid_chassis_t::_init()
 {
     _ctx.motor  = _module_deps.motor_deps;
     _ctx.pid    = _module_deps.pid_deps;
 
     // 使用 config.h 中的参数初始化运动学模型
     _kinematics = new hybrid_kin_t(0.648f, MEC_WHEELBASE, MEC_TRACK_WIDTH);
+
+    return PYRO_OK;
 }
 
 void hybrid_chassis_t::_update_feedback()

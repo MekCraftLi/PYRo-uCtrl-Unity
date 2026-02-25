@@ -44,7 +44,7 @@ mec_chassis_t::mec_chassis_t() : module_base_t("mec_chassis")
     _ctx = {};
 }
 
-void mec_chassis_t::_init()
+status_t mec_chassis_t::_init()
 {
     _kinematics          = new mecanum_kin_t(WHEELBASE, TRACK_WIDTH);
 
@@ -74,6 +74,8 @@ void mec_chassis_t::_init()
 
     // 功率控制初始化
     _power_control_init();
+
+    return PYRO_OK;
 }
 
 void mec_chassis_t::_power_control_init()

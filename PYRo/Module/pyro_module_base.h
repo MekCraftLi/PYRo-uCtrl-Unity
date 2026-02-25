@@ -89,7 +89,7 @@ class module_base_t
     virtual ~module_base_t()        = default;
 
     /** @brief Callback for initialization. 初始化回调。 */
-    virtual status_t _init()            = 0;
+    virtual status_t _init()        = 0;
 
     /** @brief Callback for sensor updates. 反馈更新回调。 */
     virtual void _update_feedback() = 0;
@@ -122,7 +122,7 @@ class module_base_t
 
     module_task_t _task;
     mutex_t _mutex;
-    
+
     static constexpr uint8_t CMD_BUF_SIZE = 16; // 缓冲区大小，建议为 2 的幂
     CmdType _cmd_buffer[CMD_BUF_SIZE];
 

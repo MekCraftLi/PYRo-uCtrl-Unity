@@ -67,7 +67,7 @@ class quad_booster_t final
     ~quad_booster_t() override = default;
 
     // --- 接口实现 ---
-    void _init() override;
+    status_t _init() override;
     void _update_feedback() override;
     void _fsm_execute() override;
 
