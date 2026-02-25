@@ -5,6 +5,7 @@
  */
 
 #include "pyro_task.h"
+#include "pyro_core_def.h"
 
 namespace pyro
 {
@@ -13,6 +14,7 @@ namespace pyro
  * @brief Constructor for task_base_t.
  * task_base_t 构造函数。
  */
+
 task_base_t::task_base_t(const char *name, const uint16_t init_stack,
                          const uint16_t loop_stack, const priority_t priority)
     : _loop_task_handle(nullptr), _task_name(name),
@@ -34,15 +36,14 @@ task_base_t::~task_base_t()
  * @brief Spawns the initial setup task.
  * 生成初始设置任务。
  */
-void task_base_t::start()
+status_t task_base_t::start()
 {
     if (_loop_task_handle != nullptr)
     {
-        return;
+        return status_t::PYRO_ERROR;
     }
 
-    xTaskCreate(init_entry_point, "init_tmp", _init_stack_depth, this,
-                convert_priority(_priority), nullptr);
+    return init_entry_point(this);
 }
 
 /**
@@ -62,13 +63,13 @@ void task_base_t::stop()
  * @brief Internal entry for the initialization phase.
  * 初始化阶段的内部入口。
  */
-void task_base_t::init_entry_point(void *arg)
+status_t task_base_t::init_entry_point(void *arg)
 {
     auto *self = static_cast<task_base_t *>(arg);
 
     if (self)
     {
-        self->init();
+        CHECK_PYRO_RET(self->init());
 
         if (self->_loop_stack_depth > 0)
         {
@@ -78,7 +79,7 @@ void task_base_t::init_entry_point(void *arg)
                         &self->_loop_task_handle);
         }
     }
-    vTaskDelete(nullptr);
+    return status_t::PYRO_ERROR;
 }
 
 /**

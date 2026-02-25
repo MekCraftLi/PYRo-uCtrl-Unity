@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "pyro_core_def.h"
 namespace pyro
 {
 
@@ -35,9 +36,9 @@ void module_base_t<Derived, CmdType, ConfigData>::configure(
 }
 
 template <typename Derived, typename CmdType, typename ConfigData>
-void module_base_t<Derived, CmdType, ConfigData>::start()
+status_t module_base_t<Derived, CmdType, ConfigData>::start()
 {
-    _task.start();
+    return _task.start();
 }
 
 /**
@@ -114,10 +115,11 @@ module_base_t<Derived, CmdType, ConfigData>::module_task_t::module_task_t(
  * 调用模块实例的初始化函数。
  */
 template <typename Derived, typename CmdType, typename ConfigData>
-void module_base_t<Derived, CmdType, ConfigData>::module_task_t::init()
+status_t module_base_t<Derived, CmdType, ConfigData>::module_task_t::init()
 {
     if (_owner)
-        _owner->_init();
+       return _owner->_init();
+    return status_t::PYRO_ERROR;
 }
 
 /**
