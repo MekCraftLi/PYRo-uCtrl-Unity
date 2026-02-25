@@ -40,7 +40,7 @@ extern "C"
         }
     }
 
-    void deps_init()
+    static void deps_init()
     {
         hybrid_deps_ptr = new pyro::hybrid_deps_t();
         hybrid_deps_ptr->motor_deps.mecanum[0] =
@@ -83,13 +83,13 @@ extern "C"
         static_cast<dm_motor_drv_t *>(hybrid_deps_ptr->motor_deps.leg[1])
             ->set_position_range(-PI, PI);
         static_cast<dm_motor_drv_t *>(hybrid_deps_ptr->motor_deps.leg[0])
-            ->set_rotate_range(-3.77f, 3.77f);
+            ->set_rotate_range(-5.655f, 5.655f);
         static_cast<dm_motor_drv_t *>(hybrid_deps_ptr->motor_deps.leg[1])
-            ->set_rotate_range(-3.77f, 3.77f);
+            ->set_rotate_range(-5.655f, 5.655f);
         static_cast<dm_motor_drv_t *>(hybrid_deps_ptr->motor_deps.leg[0])
-            ->set_torque_range(-11.0f, 11.0f);
+            ->set_torque_range(-27.0f, 27.0f);
         static_cast<dm_motor_drv_t *>(hybrid_deps_ptr->motor_deps.leg[1])
-            ->set_torque_range(-11.0f, 11.0f);
+            ->set_torque_range(-27.0f, 27.0f);
         // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
         hybrid_deps_ptr->pid_deps.mecanum_pid[0] =
@@ -101,15 +101,18 @@ extern "C"
         hybrid_deps_ptr->pid_deps.mecanum_pid[3] =
             new pid_t(0.35f, 0.0008f, 0.0002f, 1.0f, 20.0f, 200, 100, 4);
 
+        hybrid_deps_ptr->pid_deps.follow_yaw_pid =
+            new pid_t(0.5f, 0.0001f, 0.00002f, 0.5f, 11.0f, 200, 100, 4);
+
         hybrid_deps_ptr->pid_deps.track_pid[0] =
             new pid_t(0.02f, 0.0001f, 0.00002f, 0.5f, 11.0f, 200, 100, 4);
         hybrid_deps_ptr->pid_deps.track_pid[1] =
             new pid_t(0.02f, 0.0001f, 0.00002f, 0.5f, 11.0f, 200, 100, 4);
 
         hybrid_deps_ptr->pid_deps.pitch_pid =
-            new pid_t(0.5f, 0.0001f, 0.00002f, 0.5f, 11.0f, 200, 100, 4);
+            new pid_t(10.0f, 0.001f, 0.0002f, 0.1f, 4.0f, 200, 100, 4);
         hybrid_deps_ptr->pid_deps.roll_pid =
-            new pid_t(0.5f, 0.0001f, 0.00002f, 0.5f, 11.0f, 200, 100, 4);
+            new pid_t(10.0f, 0.001f, 0.0002f, 0.1f, 3.0f, 200, 100, 4);
     }
 
     void hero_chassis_init(void *argument)
@@ -117,6 +120,7 @@ extern "C"
         pyro::can_rx_drv_t::subscribe(pyro::can_hub_t::which_can::can2, 0x101);
         hybrid_cmd_ptr     = new pyro::hybrid_cmd_t();
         hybrid_chassis_ptr = pyro::hybrid_chassis_t::instance();
+        deps_init();
         hybrid_chassis_ptr->configure(*hybrid_deps_ptr);
         hybrid_chassis_ptr->start();
         xTaskCreate(hero_chassis_thread, "start_hero_chassis_thread", 128, nullptr,

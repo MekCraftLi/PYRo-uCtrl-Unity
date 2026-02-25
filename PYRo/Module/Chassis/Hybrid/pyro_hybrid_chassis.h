@@ -42,7 +42,7 @@ struct hybrid_deps_t
     struct pid_deps_t
     {
         pid_t *mecanum_pid[4]{nullptr};
-        pid_t *follow_pid{nullptr};
+        pid_t *follow_yaw_pid{nullptr};
         pid_t *track_pid[2]{nullptr};
         pid_t *pitch_pid{nullptr};
         pid_t *roll_pid{nullptr};

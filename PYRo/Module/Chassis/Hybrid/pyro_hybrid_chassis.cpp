@@ -73,7 +73,7 @@ void hybrid_chassis_t::_kinematics_solve()
     // Calculate(measurement, target) 或 (error, 0)
     // 假设 pid_t::calculate(target, current)，我们将 error 作为 P项输入
     const float follow_wz =
-        _ctx.pid.follow_pid->calculate(0.0f, _ctx.data.current_yaw_error);
+        _ctx.pid.follow_yaw_pid->calculate(0.0f, _ctx.data.current_yaw_error);
 
     // 最终角速度 = 跟随产生的角速度 + 选手手动输入的角速度(小陀螺/微调)
     const float final_wz    = follow_wz + _ctx.cmd->wz;
