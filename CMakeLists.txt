@@ -137,6 +137,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         ### --- Hero ---
         #        PYRo/Application/Mission/Hero/pyro_gimbal_app.cpp
         #        PYRo/Application/Mission/Hero/pyro_booster_app.cpp
+        ### --- Sentry ---
+        PYRo/Application/Mission/Sentry/pyro_sentry_chassis_app.cpp
 
 
         # --- Moudule ---
