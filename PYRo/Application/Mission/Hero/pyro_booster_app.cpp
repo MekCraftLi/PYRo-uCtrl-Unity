@@ -26,8 +26,8 @@ extern "C"
             return;
         }
         quad_booster_cmd_ptr->mode      = pyro::cmd_base_t::mode_t::ACTIVE;
-        quad_booster_cmd_ptr->fric1_mps = 0.0f; // 可调节
-        quad_booster_cmd_ptr->fric2_mps = 0.0f;
+        quad_booster_cmd_ptr->fric1_mps = 14.0f; // 可调节
+        quad_booster_cmd_ptr->fric2_mps = 14.0f;
         // 摩擦轮控制
         static float sl_using_time      = 0;
         if (pyro::dr16_drv_t::sw_ctrl_t::SW_UP_TO_MID == p_ctrl->rc.s_l.ctrl &&
