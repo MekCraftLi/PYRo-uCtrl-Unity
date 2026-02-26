@@ -16,7 +16,7 @@ rud_cmd_t *rud_cmd_ptr                     = nullptr;
 yaw_cmd_t *yaw_cmd_ptr                     = nullptr;
 rud_cfg_t *rud_cfg_ptr                     = nullptr;
 yaw_cfg_t *yaw_cfg_ptr                     = nullptr;
-dr16_drv_t::dr16_ctrl_t const *rc_ctrl_ptr = nullptr;
+// dr16_drv_t::dr16_ctrl_t const *rc_ctrl_ptr = nullptr;
 dr16_drv_t::dr16_ctrl_t dr16_data;
 
 void chassis_config(rud_cfg_t &rud_cfg)
@@ -78,9 +78,9 @@ void chassis_config(rud_cfg_t &rud_cfg)
             new pid_t(3.6f, 0.01f, 0.003f, 0.1f, 5.0f);
 
         rud_cfg.rud_pos_moving_offset[0] = 1.01472831f;
-        rud_cfg.rud_pos_moving_offset[0] = -0.29145637f;
-        rud_cfg.rud_pos_moving_offset[0] = -1.87299052f;
-        rud_cfg.rud_pos_moving_offset[0] = -1.04003897f;        
+        rud_cfg.rud_pos_moving_offset[1] = -0.29145637f;
+        rud_cfg.rud_pos_moving_offset[2] = -1.87299052f;
+        rud_cfg.rud_pos_moving_offset[3] = -1.04003897f;
 
         power_control_drv_t &power_controller = power_control_drv_t::get_instance(4);
         power_control_drv_t::motor_coefficient_t coef1;
@@ -126,28 +126,29 @@ void yaw_config(yaw_cfg_t &yaw_cfg)
         new pid_t(0.3f, 0.003f, 0.0003f, 0.1f, 3.0f, 15, 150, 4);
 
     yaw_cfg.yaw_offset = -2.40028524f;
+
 }
 
 extern "C"
 {
-    void chassis_rxcmd(void const *rc_ctrl)
-    {
-        std::array<uint8_t, 8> raw_data{};
-        can_rx_drv_t::get_data(can_hub_t::which_can::can2, 0x101,
-                                     raw_data);
-        rud_cmd_ptr->vx =
-            3 * static_cast<float>(static_cast<int8_t>(raw_data[0])) / 127.0f;
-        rud_cmd_ptr->vy =
-            3 * static_cast<float>(static_cast<int8_t>(raw_data[1])) / 127.0f;
-        rud_cmd_ptr->wz =
-            3 * static_cast<float>(static_cast<int8_t>(raw_data[2])) / 127.0f;
-        rud_cmd_ptr->mode = static_cast<cmd_base_t::mode_t>(raw_data[3]);
-        yaw_cmd_ptr->target_yaw_imu_angle =
-            -static_cast<float>(static_cast<int8_t>(raw_data[4]));
-        yaw_cmd_ptr->mode = static_cast<cmd_base_t::mode_t>(raw_data[5]);
-    }
+    // void chassis_rxcmd(void const *rc_ctrl)
+    // {
+    //     std::array<uint8_t, 8> raw_data{};
+    //     can_rx_drv_t::get_data(can_hub_t::which_can::can2, 0x101,
+    //                                  raw_data);
+    //     rud_cmd_ptr->vx =
+    //         3 * static_cast<float>(static_cast<int8_t>(raw_data[0])) / 127.0f;
+    //     rud_cmd_ptr->vy =
+    //         3 * static_cast<float>(static_cast<int8_t>(raw_data[1])) / 127.0f;
+    //     rud_cmd_ptr->wz =
+    //         3 * static_cast<float>(static_cast<int8_t>(raw_data[2])) / 127.0f;
+    //     rud_cmd_ptr->mode = static_cast<cmd_base_t::mode_t>(raw_data[3]);
+    //     yaw_cmd_ptr->target_yaw_imu_angle =
+    //         -static_cast<float>(static_cast<int8_t>(raw_data[4]));
+    //     yaw_cmd_ptr->mode = static_cast<cmd_base_t::mode_t>(raw_data[5]);
+    // }
 
-    void chassis_rc2cmd(void const *rc_ctrl)
+    void chassis_rc2cmd()
     {
         // read_scope_lock lock(
         //     rc_hub_t::get_instance(rc_hub_t::DR16)->get_lock());
@@ -201,8 +202,8 @@ extern "C"
         // }
         if(dr16_drv_t::sw_state_t::SW_UP == dr16_data.rc.s_r.state)
         {
-            rud_cmd_ptr->mode = cmd_base_t::mode_t::ZERO_FORCE;
-            yaw_cmd_ptr->mode = cmd_base_t::mode_t::ZERO_FORCE;
+            rud_cmd_ptr->mode = cmd_base_t::mode_t::PASSIVE;
+            yaw_cmd_ptr->mode = cmd_base_t::mode_t::PASSIVE;
             rud_cmd_ptr->follow_yaw = false;
             rud_cmd_ptr->timestamp  = 0;
             rud_cmd_ptr->vx         = 0.0f;
@@ -240,12 +241,10 @@ extern "C"
 
     void sentry_chassis_thread(void *argument)
     {
-        rud_chassis_ptr->start();
-        yaw_ptr->start();
         while (true)
         {
             // chassis_rxcmd(rc_ctrl_ptr);
-            chassis_rc2cmd(rc_ctrl_ptr);
+            chassis_rc2cmd();
             rud_chassis_ptr->set_command(*rud_cmd_ptr);
             yaw_ptr->set_command(*yaw_cmd_ptr);
             vTaskDelay(1);
@@ -254,16 +253,21 @@ extern "C"
 
     void sentry_chassis_init(void *argument)
     {
-        can_rx_drv_t::subscribe(can_hub_t::which_can::can2, 0x101);
-        rud_cmd_ptr     = new rud_cmd_t();
+        rud_cmd_ptr = new rud_cmd_t();
+        rud_cfg_ptr = new rud_cfg_t();
+        yaw_cmd_ptr = new yaw_cmd_t();
+        yaw_cfg_ptr = new yaw_cfg_t();
+
+        // can_rx_drv_t::subscribe(can_hub_t::which_can::can2, 0x101);
         rud_chassis_ptr = rud_chassis_t::instance();
         chassis_config(*rud_cfg_ptr);
         rud_chassis_ptr->configure(*rud_cfg_ptr);
-        yaw_cmd_ptr = new yaw_cmd_t();
         yaw_ptr     = yaw_t::instance();
         yaw_config(*yaw_cfg_ptr);
         yaw_ptr->configure(*yaw_cfg_ptr);
-        xTaskCreate(sentry_chassis_thread, "start_app_thread", 128, nullptr,
+        rud_chassis_ptr->start();
+        yaw_ptr->start();
+        xTaskCreate(sentry_chassis_thread, "start_app_thread", 512, nullptr,
                     configMAX_PRIORITIES - 1, nullptr);
         vTaskDelete(nullptr);
     }
