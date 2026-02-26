@@ -18,12 +18,15 @@ namespace pyro
 /* Inner Task Implementation                                                  */
 /* ========================================================================== */
 
-void supercap_drv_t::supercap_task_t::init()
+status_t supercap_drv_t::supercap_task_t::init()
 {
     if (_owner)
     {
         _owner->init_impl();
+        return status_t::PYRO_OK;
     }
+    else 
+        return status_t::PYRO_NOT_FOUND;
 }
 
 void supercap_drv_t::supercap_task_t::run_loop()

@@ -63,9 +63,10 @@ float yaw_t::get_yaw_error() const
         return world_yaw_error;
 }
 
-void yaw_t::_init()
+status_t yaw_t::_init()
 {
     _ctx.yaw_config        = _config;
+    return status_t::PYRO_OK; 
 }
 
 void yaw_t::_update_feedback()
