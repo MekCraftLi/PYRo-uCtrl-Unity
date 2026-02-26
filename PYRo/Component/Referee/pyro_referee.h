@@ -98,7 +98,7 @@ class referee_drv_t
         {
         }
 
-        void init() override;
+        status_t init() override;
         void run_loop() override;
 
       private:

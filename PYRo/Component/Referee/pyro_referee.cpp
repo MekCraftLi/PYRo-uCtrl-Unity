@@ -6,7 +6,7 @@
 #include "pyro_referee.h"
 #include "pyro_crc.h"
 #include "pyro_dwt_drv.h"
-
+#include "pyro_core_config.h"
 #include <cstring> // for memcpy, strlen
 
 namespace pyro
@@ -17,9 +17,10 @@ namespace pyro
 // Task Implementation
 // ==========================================================================
 
-void referee_drv_t::referee_task::init()
+status_t referee_drv_t::referee_task::init()
 {
     // Task-specific initialization if needed
+    return PYRO_OK;
 }
 
 void referee_drv_t::referee_task::run_loop()
@@ -48,7 +49,7 @@ void referee_drv_t::referee_task::run_loop()
 referee_drv_t *referee_drv_t::get_instance()
 {
     static referee_drv_t instance(
-        uart_drv_t::get_instance(uart_drv_t::which_uart::uart1));
+        uart_drv_t::get_instance(static_cast<uart_drv_t::which_uart>(REFEREE_UART)));
     return &instance;
 }
 

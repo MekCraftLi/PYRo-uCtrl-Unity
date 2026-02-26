@@ -11,7 +11,7 @@
 #define CONTROLLER_DEMO_EN 0
 #define CONTROL_DEMO_EN    0
 #define IMU_DEMO_EN        0
-#define REFEREE_DEMO_EN    1
+#define REFEREE_DEMO_EN    0
 
 #endif
 
@@ -50,7 +50,7 @@
 #define GIMBAL_ID  1
 #define CHASSIS_ID 2
 
-#define BOARD_ID   GIMBAL_ID
+#define BOARD_ID   CHASSIS_ID
 #endif
 
 #define PYRO_UART1 0
@@ -60,6 +60,8 @@
 
 #define DR16_UART PYRO_UART5
 #define VT03_UART PYRO_UART1
+
+#define REFEREE_UART PYRO_UART1
 
 #define VOFA_DEBUG_PORT PYRO_UART10
 #define JCOM_DEBUG_PORT PYRO_UART7

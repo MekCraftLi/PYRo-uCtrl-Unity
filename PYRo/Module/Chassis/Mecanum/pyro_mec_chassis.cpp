@@ -107,18 +107,18 @@ void mec_chassis_t::_power_control()
                 i, _ctx.power_motor_data[i].torque_cmd,
                 _ctx.power_motor_data[i].gyro);
     }
-    // if (_ctx.cap_feedback.vot_cap >= 1800)
-    // {
-    //     power_control_drv_t::get_instance().calculate_restricted_torques(
-    //         _ctx.power_motor_data, 4,
-    //         static_cast<float>(referee_data.robot_status.chassis_power_limit) + 100.0f);
-    // }
-    // else
-    // {
-    //     power_control_drv_t::get_instance().calculate_restricted_torques(
-    //         _ctx.power_motor_data, 4,
-    //         referee_data.robot_status.chassis_power_limit);
-    // }
+    if (_ctx.cap_feedback.vot_cap >= 1800)
+    {
+        power_control_drv_t::get_instance().calculate_restricted_torques(
+            _ctx.power_motor_data, 4,
+            static_cast<float>(referee_drv_t::get_instance()->get_data().robot_status.chassis_power_limit) + 100.0f);
+    }
+    else
+    {
+        power_control_drv_t::get_instance().calculate_restricted_torques(
+            _ctx.power_motor_data, 4,
+            referee_drv_t::get_instance()->get_data().robot_status.chassis_power_limit);
+    }
     for (int i = 0; i < 4; i++)
         _ctx.data.out_wheel_torque[i] =
             _ctx.power_motor_data[i].restricted_torque;

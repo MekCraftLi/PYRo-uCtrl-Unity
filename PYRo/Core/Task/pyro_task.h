@@ -70,12 +70,11 @@ class task_base_t
 
   private:
     const char *_task_name;
-    uint16_t _init_stack_depth;
     uint16_t _loop_stack_depth;
     priority_t _priority;
 
     /** @brief Entry point for init. 初始化入口。 */
-    static void init_entry_point(void *arg);
+    static status_t init_entry_point(void *arg);
 
     /** @brief Entry point for loop. 循环入口。 */
     static void loop_entry_point(void *arg);
