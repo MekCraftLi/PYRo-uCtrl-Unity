@@ -59,7 +59,6 @@ class rc_drv_t
 
     /* Public Methods - Pure Virtual Interface
      * ---------------------------------*/
-    virtual status_t init()        = 0;
     virtual void enable()          = 0;
     virtual void disable()         = 0;
     virtual void thread()          = 0;
@@ -69,6 +68,7 @@ class rc_drv_t
     [[nodiscard]] rw_lock &get_lock() const;
 
   protected:
+    virtual status_t init()        = 0;
     /**
      * @brief ISR Callback: Handles raw UART data ingestion.
      * ISR 回调：处理原始 UART 数据摄入。
@@ -83,7 +83,7 @@ class rc_drv_t
      * @return true if data was accepted. 如果数据被接收则返回 true。
      */
     virtual bool rc_callback(uint8_t *buf, uint16_t len,
-                             BaseType_t xHigherPriorityTaskWoken) = 0;
+                             BaseType_t& xHigherPriorityTaskWoken) = 0;
 
     /* Protected Members - Resources and State
      * ---------------------------------*/

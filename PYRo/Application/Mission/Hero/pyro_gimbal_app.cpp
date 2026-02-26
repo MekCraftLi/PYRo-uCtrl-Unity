@@ -21,7 +21,7 @@ extern "C"
 
         if (pyro::dr16_drv_t::sw_state_t::SW_MID != p_ctrl->rc.s_r.state)
         {
-            direct_gimbal_cmd_ptr->mode = pyro::cmd_base_t::mode_t::ZERO_FORCE;
+            direct_gimbal_cmd_ptr->mode = pyro::cmd_base_t::mode_t::PASSIVE;
             direct_gimbal_cmd_ptr->pitch_delta_angle = 0;
             direct_gimbal_cmd_ptr->yaw_delta_angle   = 0;
             return;
@@ -77,7 +77,6 @@ extern "C"
 
     void hero_gimbal_thread(void *argument)
     {
-        direct_gimbal_ptr->start();
         while (true)
         {
             chassis_rc2cmd(rc_ctrl_ptr);
@@ -93,6 +92,7 @@ extern "C"
         direct_gimbal_ptr     = pyro::direct_gimbal_t::instance();
         rc_ctrl_ptr = static_cast<pyro::dr16_drv_t::dr16_ctrl_t const *>(
             pyro::rc_hub_t::get_instance(pyro::rc_hub_t::DR16)->read());
+        direct_gimbal_ptr->start();
         xTaskCreate(hero_gimbal_thread, "start_app_thread", 128, nullptr,
                     configMAX_PRIORITIES - 1, nullptr);
         vTaskDelete(nullptr);

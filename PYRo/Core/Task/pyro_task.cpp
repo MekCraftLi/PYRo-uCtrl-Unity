@@ -16,8 +16,7 @@ namespace pyro
 task_base_t::task_base_t(const char *name, const uint16_t init_stack,
                          const uint16_t loop_stack, const priority_t priority)
     : _loop_task_handle(nullptr), _task_name(name),
-      _init_stack_depth(init_stack), _loop_stack_depth(loop_stack),
-      _priority(priority)
+      _loop_stack_depth(loop_stack), _priority(priority)
 {
 }
 
@@ -34,15 +33,16 @@ task_base_t::~task_base_t()
  * @brief Spawns the initial setup task.
  * 生成初始设置任务。
  */
-void task_base_t::start()
+status_t task_base_t::start()
 {
     if (_loop_task_handle != nullptr)
     {
-        return;
+        return PYRO_ERROR;
     }
 
-    xTaskCreate(init_entry_point, "init_tmp", _init_stack_depth, this,
-                convert_priority(_priority), nullptr);
+    const status_t ret = init_entry_point(this);
+
+    return ret;
 }
 
 /**
@@ -62,23 +62,31 @@ void task_base_t::stop()
  * @brief Internal entry for the initialization phase.
  * 初始化阶段的内部入口。
  */
-void task_base_t::init_entry_point(void *arg)
+status_t task_base_t::init_entry_point(void *arg)
 {
     auto *self = static_cast<task_base_t *>(arg);
 
     if (self)
     {
-        self->init();
+        const status_t init_ret = self->init();
+        if (init_ret != PYRO_OK)
+        {
+            return init_ret;
+        }
 
         if (self->_loop_stack_depth > 0)
         {
-            xTaskCreate(loop_entry_point, self->_task_name,
-                        self->_loop_stack_depth, self,
-                        convert_priority(self->_priority),
-                        &self->_loop_task_handle);
+            const BaseType_t ret = xTaskCreate(
+                loop_entry_point, self->_task_name, self->_loop_stack_depth,
+                self, convert_priority(self->_priority),
+                &self->_loop_task_handle);
+            if (ret == pdPASS)
+            {
+                return PYRO_OK;
+            }
         }
     }
-    vTaskDelete(nullptr);
+    return PYRO_ERROR;
 }
 
 /**
