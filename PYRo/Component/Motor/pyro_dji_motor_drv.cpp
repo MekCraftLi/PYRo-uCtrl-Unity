@@ -230,8 +230,8 @@ dji_m2006_motor_drv_t::dji_m2006_motor_drv_t(
 }
 
 dji_gm_6020_motor_drv_t::dji_gm_6020_motor_drv_t(
-    dji_motor_tx_frame_t::register_id_t id, can_hub_t::which_can which)
-    : dji_motor_drv_t(id, which)
+    dji_motor_tx_frame_t::register_id_t id, can_hub_t::which_can which, const uint32_t offset)
+    : dji_motor_drv_t(id, which), _offset(offset)
 {
     switch (id)
     {
@@ -239,14 +239,14 @@ dji_gm_6020_motor_drv_t::dji_gm_6020_motor_drv_t(
         case dji_motor_tx_frame_t::id_2:
         case dji_motor_tx_frame_t::id_3:
         case dji_motor_tx_frame_t::id_4:
-            _tx_id = 0x1fe;
+            _tx_id = 0x1ff;
             _rx_id = 0x204 + id + 1;
             break;
         case dji_motor_tx_frame_t::id_5:
         case dji_motor_tx_frame_t::id_6:
         case dji_motor_tx_frame_t::id_7:
             // case dji_motor_tx_frame_t::id_8: for gm6020 id8 is unavailable
-            _tx_id = 0x2fe;
+            _tx_id = 0x2ff;
             _rx_id = 0x204 + id + 1;
             break;
         default:
@@ -263,8 +263,36 @@ dji_gm_6020_motor_drv_t::dji_gm_6020_motor_drv_t(
     _tx_frame =
         dji_motor_tx_frame_pool_t::get_instance()->get_frame(which, _tx_id);
     _tx_frame->register_id(_register_id);
-    _max_torque_f = 3.0f;
-    _max_torque_i = 16384;
+    _max_torque_f = 24.0f;
+    _max_torque_i = 25000;
+
+
 }
+
+status_t dji_gm_6020_motor_drv_t::update_feedback()
+{
+    static std::array<uint8_t, 8> data;
+    _feedback_msg->get_data(data);
+
+    uint16_t raw_position = (uint16_t)((data[0] << 8) | (data[1]));
+
+    raw_position = (raw_position - _offset + 8192) % 8192;
+
+    _current_position = ((float)(raw_position)) /
+                        8192.0f * 2 * PI;
+    if(_current_position > PI)
+    {
+        _current_position -= 2 * PI;
+    }
+    _current_rotate =
+        ((float)((int16_t)((data[2] << 8) | (data[3])))) * 2 * pyro::PI / 60;
+    _current_torque = ((float)((int16_t)((data[4] << 8) | (data[5])))) /
+                      _max_torque_i * _max_torque_f;
+    _temperature = (int8_t)(data[6]);
+
+    return PYRO_OK;
+}
+
+
 
 }

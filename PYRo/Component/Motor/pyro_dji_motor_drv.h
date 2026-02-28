@@ -2,6 +2,7 @@
 #define DJI_M_MOTOR_DRV_H
 
 #include "pyro_motor_base.h"
+#include "Peripheral/CAN/pyro_can_drv.h"
 
 namespace pyro
 {
@@ -103,10 +104,14 @@ class dji_gm_6020_motor_drv_t : public dji_motor_drv_t
 {
   public:
     dji_gm_6020_motor_drv_t(pyro::dji_motor_tx_frame_t::register_id_t id,
-                            can_hub_t::which_can which);
+                            can_hub_t::which_can which, const uint32_t offset = 0x0000);
     ~dji_gm_6020_motor_drv_t()
     {
     }
+
+    status_t update_feedback() override;
+private:
+    uint32_t _offset;
 };
 }; // namespace pyro
 
