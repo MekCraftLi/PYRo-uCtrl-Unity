@@ -71,7 +71,7 @@ can_drv_t::~can_drv_t(void)
     // vSemaphoreDelete(_registermtx);
 }
 
-can_drv_t& can_drv_t::init(void)
+can_drv_t &can_drv_t::init(void)
 {
     FDCAN_FilterTypeDef fdcan_filter;
     fdcan_filter.IdType       = FDCAN_STANDARD_ID;
@@ -81,12 +81,23 @@ can_drv_t& can_drv_t::init(void)
     fdcan_filter.FilterID1    = 0x00;
     fdcan_filter.FilterID2    = 0x00;
 
+    // 2. 【新增】配置扩展帧过滤器
+    FDCAN_FilterTypeDef ext_filter;
+    ext_filter.IdType       = FDCAN_EXTENDED_ID; // 指定为扩展帧
+    ext_filter.FilterIndex  = 0;                 // 扩展帧过滤器有自己的索引空间
+    ext_filter.FilterType   = FDCAN_FILTER_MASK;
+    ext_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    ext_filter.FilterID1    = 0x00;
+    ext_filter.FilterID2    = 0x00; // 掩码为0表示接收所有扩展帧
+
     static can_drv_t err_obj(nullptr);
 
     if (HAL_OK != HAL_FDCAN_ConfigFilter(_hfdcan, &fdcan_filter))
         return err_obj;
+    HAL_FDCAN_ConfigFilter(_hfdcan, &ext_filter);
+
     if (HAL_OK !=
-        HAL_FDCAN_ConfigGlobalFilter(_hfdcan, FDCAN_REJECT, FDCAN_REJECT,
+        HAL_FDCAN_ConfigGlobalFilter(_hfdcan, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0,
                                      FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE))
         return err_obj;
     if (HAL_OK != HAL_FDCAN_ConfigFifoWatermark(_hfdcan, FDCAN_CFG_RX_FIFO0, 1))
@@ -243,7 +254,7 @@ void can_global_handle(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier,
                                                          data);
 }
 
-FDCAN_RxHeaderTypeDef rx_header;
+static FDCAN_RxHeaderTypeDef rx_header;
 extern "C" void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
                                           uint32_t RxFifo0ITs)
 {
@@ -258,12 +269,14 @@ extern "C" void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
         FDCAN_STANDARD_ID == rx_header.IdType)
     {
 
-
-        can_global_handle(hfdcan, rx_header.Identifier, data);
-    } else if (FDCAN_FRAME_CLASSIC == rx_header.RxFrameType &&
+        {
+            can_global_handle(hfdcan, rx_header.Identifier, data);
+        }
+    }
+    else if (FDCAN_FRAME_CLASSIC == rx_header.RxFrameType &&
         FDCAN_EXTENDED_ID == rx_header.IdType)
     {
-        extern void getBoardCommFromISR(uint8_t* pData);
+        extern void getBoardCommFromISR(uint8_t *pData);
         getBoardCommFromISR(data);
     }
 
