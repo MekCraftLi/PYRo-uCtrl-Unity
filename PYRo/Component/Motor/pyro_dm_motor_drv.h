@@ -32,6 +32,8 @@ class dm_motor_drv_t : public motor_base_t // MIT only
     void set_position_range(float min, float max);
     void set_rotate_range(float min, float max);
     void set_torque_range(float min, float max);
+    status_t send_mit_ctrl(float target_pos, float target_vel, float t_ff);
+    status_t send_mit_ctrl(float target_pos, float target_vel, float t_ff, float kp, float kd);
 
     void set_runtime_kp(float kp);
     void set_runtime_kd(float kd);

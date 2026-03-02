@@ -260,5 +260,11 @@ extern "C" void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
 
 
         can_global_handle(hfdcan, rx_header.Identifier, data);
+    } else if (FDCAN_FRAME_CLASSIC == rx_header.RxFrameType &&
+        FDCAN_EXTENDED_ID == rx_header.IdType)
+    {
+        extern void getBoardCommFromISR(uint8_t* pData);
+        getBoardCommFromISR(data);
     }
+
 }
