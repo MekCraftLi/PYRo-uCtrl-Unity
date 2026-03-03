@@ -116,6 +116,14 @@ status_t dji_motor_drv_t::disable()
     return PYRO_OK;
 }
 
+uint32_t dji_motor_drv_t::get_current_ecd()
+{
+    static std::array<uint8_t, 8> data;
+    _feedback_msg->get_data(data);
+
+    return (data[0] << 8) | (data[1]);
+
+}
 status_t dji_motor_drv_t::update_feedback()
 {
     static std::array<uint8_t, 8> data;

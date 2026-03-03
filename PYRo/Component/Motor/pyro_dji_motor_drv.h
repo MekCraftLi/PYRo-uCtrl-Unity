@@ -56,6 +56,9 @@ class dji_motor_tx_frame_pool_t
     std::vector<dji_motor_tx_frame_t *> _frame_list;
 };
 
+
+
+
 class dji_motor_drv_t : public motor_base_t
 {
   public:
@@ -68,6 +71,8 @@ class dji_motor_drv_t : public motor_base_t
 
     status_t update_feedback() override;
     status_t send_torque(float torque) override;
+
+    uint32_t get_current_ecd();
 
   protected:
     dji_motor_tx_frame_t::register_id_t _register_id;

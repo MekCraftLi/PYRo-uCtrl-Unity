@@ -75,7 +75,7 @@ void state_t<Context>::discard_request()
  * 指向用户传参的指针。
  */
 template <typename Context>
-void fsm_t<Context>::enter(Context *ctx)
+void fsm_t<Context>::enter(Context &ctx)
 {
     on_enter(ctx);
     if (_active_state)
@@ -97,7 +97,7 @@ void fsm_t<Context>::enter(Context *ctx)
  * 指向用户传参的指针。
  */
 template <typename Context>
-void fsm_t<Context>::execute(Context *ctx)
+void fsm_t<Context>::execute(Context &ctx)
 {
     // Phase A: Transition Processing.
     // 阶段 A：转换处理。
@@ -135,7 +135,7 @@ void fsm_t<Context>::execute(Context *ctx)
  * 指向用户传参的指针。
  */
 template <typename Context>
-void fsm_t<Context>::exit(Context *ctx)
+void fsm_t<Context>::exit(Context &ctx)
 {
     if (_active_state)
     {
@@ -183,7 +183,7 @@ void fsm_t<Context>::change_state(state_t<Context> *next)
  * 如果发生了转换则返回 true。
  */
 template <typename Context>
-bool fsm_t<Context>::process_switch(Context *ctx)
+bool fsm_t<Context>::process_switch(Context &ctx)
 {
     if (!_target_state)
         return false;
@@ -212,12 +212,12 @@ bool fsm_t<Context>::process_switch(Context *ctx)
 /* Hook Default Implementations ----------------------------------------------*/
 
 template <typename Context>
-void fsm_t<Context>::on_enter(Context *ctx) { (void)ctx; }
+void fsm_t<Context>::on_enter(Context &ctx) { (void)ctx; }
 
 template <typename Context>
-void fsm_t<Context>::on_exit(Context *ctx) { (void)ctx; }
+void fsm_t<Context>::on_exit(Context &ctx) { (void)ctx; }
 
 template <typename Context>
-void fsm_t<Context>::on_execute(Context *ctx) { (void)ctx; }
+void fsm_t<Context>::on_execute(Context &ctx) { (void)ctx; }
 
 } // namespace pyro

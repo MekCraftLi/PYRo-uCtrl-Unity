@@ -40,7 +40,7 @@ template <typename Context> class state_t
      * @param ctx Pointer to the system context.
      * 指向用户传参的指针。
      */
-    virtual void enter(Context *ctx)   = 0;
+    virtual void enter(Context& ctx)   = 0;
 
     /**
      * @brief Called every update cycle.
@@ -49,7 +49,7 @@ template <typename Context> class state_t
      * @param ctx Pointer to the system context.
      * 指向用户传参的指针。
      */
-    virtual void execute(Context *ctx) = 0;
+    virtual void execute(Context& ctx) = 0;
 
     /**
      * @brief Called when exiting the state.
@@ -58,18 +58,10 @@ template <typename Context> class state_t
      * @param ctx Pointer to the system context.
      * 指向用户传参的指针。
      */
-    virtual void exit(Context *ctx)    = 0;
-
-    /**
-     * @brief Get the current instance pointer.
-     * 获取当前实例指针。
-     *
-     * @return state_t<Context>* Instance pointer.
-     * 实例指针。
-     */
-    state_t<Context> *get_instance();
+    virtual void exit(Context& ctx)    = 0;
 
   protected:
+    state_t<Context> *get_instance();
     /**
      * @brief Request a state transition.
      * 请求状态切换的回调处理器。
@@ -100,25 +92,25 @@ template <typename Context> class fsm_t : public state_t<Context>
     state_t<Context> *_target_state = nullptr;
 
   public:
-    void enter(Context *ctx) final;
-    void execute(Context *ctx) final;
-    void exit(Context *ctx) final;
+    void enter(Context &ctx) final;
+    void execute(Context &ctx) final;
+    void exit(Context &ctx) final;
 
     void reset();
     void change_state(state_t<Context> *next);
 
   protected:
     /** @brief FSM entry callback. FSM 进入回调。 */
-    virtual void on_enter(Context *ctx);
+    virtual void on_enter(Context &ctx);
 
     /** @brief FSM exit callback. FSM 退出回调。 */
-    virtual void on_exit(Context *ctx);
+    virtual void on_exit(Context &ctx);
 
     /** @brief FSM execution callback. FSM 执行逻辑回调。 */
-    virtual void on_execute(Context *ctx);
+    virtual void on_execute(Context&ctx);
 
   private:
-    bool process_switch(Context *ctx);
+    bool process_switch(Context &ctx);
 };
 
 } // namespace pyro
