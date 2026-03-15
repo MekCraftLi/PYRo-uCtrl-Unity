@@ -37,6 +37,11 @@ bool motor_base_t::is_enable(void)
 {
     return _enable;
 }
+bool motor_base_t::is_online()
+{
+    if (_feedback_msg == nullptr) return false;
+    return (xTaskGetTickCount() - _feedback_msg->get_last_update_time()) < 50;
+}
 
 
 } // namespace pyro

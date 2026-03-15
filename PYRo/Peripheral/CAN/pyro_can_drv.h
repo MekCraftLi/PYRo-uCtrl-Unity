@@ -23,7 +23,10 @@ class can_msg_buffer_t
     void mark_read();
     void update_data(const uint8_t *data);
     bool get_data(std::array<uint8_t, 8> &data);
-    TickType_t get_last_update_time();
+    TickType_t get_last_update_time()
+    {
+        return _last_update_time;
+    }
 
   private:
     uint32_t _id;
