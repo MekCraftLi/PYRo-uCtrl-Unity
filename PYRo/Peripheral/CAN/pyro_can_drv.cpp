@@ -104,7 +104,7 @@ pyro::status_t can_drv_t::start(void)
     if (HAL_OK != HAL_FDCAN_Start(_hfdcan))
         return pyro::PYRO_ERROR;
     if (HAL_OK != HAL_FDCAN_ActivateNotification(
-                      _hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_BUS_OFF, 0))
+                      _hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_BUS_OFF, 0))
         return pyro::PYRO_ERROR;
     return pyro::PYRO_OK;
 }
